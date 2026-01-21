@@ -77,7 +77,7 @@ async function uploadStorefronts() {
     const filePath = path.join(DATA_DIR, 'storefronts.json');
     if (!fs.existsSync(filePath)) {
         console.log('  No storefronts.json found, skipping');
-        return 0;
+        return { count: 0, ids: new Set() };
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -85,23 +85,32 @@ async function uploadStorefronts() {
 
     console.log(`  Uploading ${storefronts.length} storefronts...`);
 
-    // Transform to Supabase format
-    const rows = storefronts.map(s => ({
-        id: s.id,
-        url: s.url,
-        username: s.username,
-        name: s.name || '',
-        bio: s.bio || '',
-        image: s.image || '',
-        is_top: s.isTop || false,
-        likes: s.likes || 0,
-        lists: s.lists || 0,
-        total_list_likes: s.totalListLikes || 0,
-        marketplace: s.marketplace || 'US'
-    }));
+    // Transform to Supabase format and deduplicate by id
+    const seen = new Set();
+    const rows = [];
+    for (const s of storefronts) {
+        if (!seen.has(s.id)) {
+            seen.add(s.id);
+            rows.push({
+                id: s.id,
+                url: s.url,
+                username: s.username,
+                name: s.name || '',
+                bio: s.bio || '',
+                image: s.image || '',
+                is_top: s.isTop || false,
+                likes: s.likes || 0,
+                lists: s.lists || 0,
+                total_list_likes: s.totalListLikes || 0,
+                marketplace: s.marketplace || 'US'
+            });
+        }
+    }
 
-    // Upload in batches of 500
-    const batchSize = 500;
+    console.log(`  Deduplicated to ${rows.length} unique storefronts`);
+
+    // Upload in batches of 100 (smaller batches to avoid conflicts)
+    const batchSize = 100;
     for (let i = 0; i < rows.length; i += batchSize) {
         const batch = rows.slice(i, i + batchSize);
         await supabaseRequest('storefronts', 'POST', batch, {
@@ -110,10 +119,10 @@ async function uploadStorefronts() {
         console.log(`    Uploaded ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
     }
 
-    return storefronts.length;
+    return { count: rows.length, ids: seen };
 }
 
-async function uploadLists() {
+async function uploadLists(validStorefrontIds) {
     const filePath = path.join(DATA_DIR, 'lists.json');
     if (!fs.existsSync(filePath)) {
         console.log('  No lists.json found, skipping');
@@ -125,18 +134,33 @@ async function uploadLists() {
 
     console.log(`  Uploading ${lists.length} lists...`);
 
-    // Transform to Supabase format
-    const rows = lists.map(l => ({
-        id: l.id,
-        storefront_id: l.storefront,
-        name: l.name || '',
-        url: l.url || '',
-        likes: l.likes || 0,
-        products: l.products || 0
-    }));
+    // Transform to Supabase format, deduplicate, and filter by valid storefronts
+    const seen = new Set();
+    const rows = [];
+    let skipped = 0;
+    for (const l of lists) {
+        if (!seen.has(l.id)) {
+            seen.add(l.id);
+            // Only include lists with valid storefront references
+            if (validStorefrontIds.has(l.storefront)) {
+                rows.push({
+                    id: l.id,
+                    storefront_id: l.storefront,
+                    name: l.name || '',
+                    url: l.url || '',
+                    likes: l.likes || 0,
+                    products: l.products || 0
+                });
+            } else {
+                skipped++;
+            }
+        }
+    }
+
+    console.log(`  Deduplicated to ${rows.length} unique lists (${skipped} skipped - orphaned)`);
 
     // Upload in batches
-    const batchSize = 500;
+    const batchSize = 100;
     for (let i = 0; i < rows.length; i += batchSize) {
         const batch = rows.slice(i, i + batchSize);
         await supabaseRequest('lists', 'POST', batch, {
@@ -145,7 +169,7 @@ async function uploadLists() {
         console.log(`    Uploaded ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
     }
 
-    return lists.length;
+    return rows.length;
 }
 
 async function uploadProducts() {
@@ -160,35 +184,56 @@ async function uploadProducts() {
 
     console.log(`  Uploading ${products.length} products...`);
 
-    // Transform to Supabase format
-    const rows = products.map(p => ({
-        asin: p.asin,
-        title: p.title || '',
-        url: p.url || '',
-        price: p.price || null,
-        currency: p.currency || 'USD',
-        image: p.image || '',
-        list_id: p.listId,
-        storefront_id: p.storefront,
-        position: p.position || 0
-    }));
+    // Transform to Supabase format and deduplicate by asin+list_id
+    const seen = new Set();
+    const rows = [];
+    for (const p of products) {
+        const key = `${p.asin}_${p.listId}`;
+        if (!seen.has(key) && p.asin && p.listId) {
+            seen.add(key);
+            rows.push({
+                asin: p.asin,
+                title: p.title || '',
+                url: p.url || '',
+                price: p.price || null,
+                currency: p.currency || 'USD',
+                image: p.image || '',
+                list_id: p.listId,
+                storefront_id: p.storefront,
+                position: p.position || 0
+            });
+        }
+    }
 
-    // Upload in batches
-    const batchSize = 500;
+    console.log(`  Deduplicated to ${rows.length} unique products`);
+
+    // Upload in batches (smaller to handle errors)
+    const batchSize = 50;
+    let uploaded = 0;
     for (let i = 0; i < rows.length; i += batchSize) {
         const batch = rows.slice(i, i + batchSize);
         try {
             await supabaseRequest('products', 'POST', batch, {
                 prefer: 'resolution=merge-duplicates'
             });
+            uploaded += batch.length;
         } catch (err) {
-            // Some products may have duplicate asin+list_id, skip errors
-            console.log(`    Warning: Some products skipped (duplicates)`);
+            // Try one by one if batch fails
+            for (const row of batch) {
+                try {
+                    await supabaseRequest('products', 'POST', [row], {
+                        prefer: 'resolution=merge-duplicates'
+                    });
+                    uploaded++;
+                } catch (e) {
+                    // Skip individual failures
+                }
+            }
         }
         console.log(`    Uploaded ${Math.min(i + batchSize, rows.length)}/${rows.length}`);
     }
 
-    return products.length;
+    return uploaded;
 }
 
 async function updateStats(storefrontCount, listCount, productCount) {
@@ -229,10 +274,10 @@ async function main() {
 
     try {
         console.log('Step 1: Upload Storefronts');
-        const storefrontCount = await uploadStorefronts();
+        const { count: storefrontCount, ids: storefrontIds } = await uploadStorefronts();
 
         console.log('\nStep 2: Upload Lists');
-        const listCount = await uploadLists();
+        const listCount = await uploadLists(storefrontIds);
 
         console.log('\nStep 3: Upload Products');
         const productCount = await uploadProducts();

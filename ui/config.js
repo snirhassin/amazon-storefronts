@@ -1,10 +1,3 @@
 // Supabase configuration
-// These will be replaced by Vercel environment variables during build
-// Or you can set them manually for local development
-
-window.SUPABASE_URL = '';
-window.SUPABASE_ANON_KEY = '';
-
-// To enable Supabase, set these values:
-// window.SUPABASE_URL = 'https://your-project.supabase.co';
-// window.SUPABASE_ANON_KEY = 'your-anon-key';
+window.SUPABASE_URL = 'https://vtvhxdgmwotztfqbbsgk.supabase.co';
+window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0dmh4ZGdtd290enRmcWJic2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzkxMjksImV4cCI6MjA4NDU1NTEyOX0.1oDDr6DS0bhDzQt0_52IbpOkfRA_WIQQ7ClgpnsUALA';
