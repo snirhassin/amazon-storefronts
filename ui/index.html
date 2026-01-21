@@ -887,13 +887,18 @@ Products: {{products}}</textarea>
                         </div>
                         <div id="imagePromptBody" style="display: none; padding: 20px; border-top: 1px solid #e0e0e0;">
                             <label style="display: block; font-weight: 500; margin-bottom: 8px;">Initial Prompt</label>
-                            <textarea id="draftImagePrompt" style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 13px;">Create a vibrant product collage for Facebook ads.
-Style: Modern, clean, lifestyle photography
-Background: Soft gradient (#f8f9fa to #e9ecef)
-Include price tags and brand accents.
+                            <textarea id="draftImagePrompt" style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 13px;">Create a UGC-style Facebook ad image for "{{list_name}}"
 
-Products: {{products}}
-Theme: {{list_name}}</textarea>
+Style: Authentic influencer content, user-generated feel, casual and relatable
+Colors: Vibrant, eye-catching, bold and playful color palette
+Mood: Excited influencer sharing their favorite finds with followers
+Scene: Lifestyle setting with products arranged naturally, like an unboxing or haul
+
+Key elements:
+- Bright, saturated colors that pop in the feed
+- Natural lighting with warm tones
+- Products displayed in an authentic, "just discovered this" way
+- Engaging composition that feels personal, not corporate</textarea>
                             <div style="margin-top: 15px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                                 <select id="imageDimensions" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
                                     <option value="all">All FB Sizes (3 images)</option>
@@ -2232,6 +2237,12 @@ List: {{list_name}}</textarea>
             document.getElementById('draftStorefront').textContent = storefrontId;
             document.getElementById('draftFinalTitle').value = list.name;
             document.getElementById('draftFinalDesc').value = `Discover amazing products from ${storefrontId}'s ${list.name} collection.`;
+
+            // Update image prompt with list name
+            const imagePrompt = document.getElementById('draftImagePrompt');
+            if (imagePrompt) {
+                imagePrompt.value = imagePrompt.value.replace(/\{\{list_name\}\}/g, list.name);
+            }
 
             // Populate products preview
             const productsPreview = document.getElementById('draftProductsPreview');
