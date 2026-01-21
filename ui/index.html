@@ -1277,12 +1277,12 @@ List: {{list_name}}</textarea>
         // Supabase configuration - set these for your project
         const SUPABASE_URL = window.SUPABASE_URL || '';
         const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || '';
-        let supabase = null;
+        let supabaseClient = null;
 
         // Initialize Supabase client
         function initSupabase() {
             if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 return true;
             }
             return false;
@@ -1291,7 +1291,7 @@ List: {{list_name}}</textarea>
         // Load data from Supabase
         async function loadFromSupabase() {
             // Load storefronts
-            const { data: storefrontsData, error: storefrontsError } = await supabase
+            const { data: storefrontsData, error: storefrontsError } = await supabaseClient
                 .from('storefronts')
                 .select('*')
                 .order('total_list_likes', { ascending: false });
@@ -1312,7 +1312,7 @@ List: {{list_name}}</textarea>
             }));
 
             // Load lists
-            const { data: listsData, error: listsError } = await supabase
+            const { data: listsData, error: listsError } = await supabaseClient
                 .from('lists')
                 .select('*')
                 .order('likes', { ascending: false });
@@ -1328,7 +1328,7 @@ List: {{list_name}}</textarea>
             }));
 
             // Load products
-            const { data: productsData, error: productsError } = await supabase
+            const { data: productsData, error: productsError } = await supabaseClient
                 .from('products')
                 .select('*')
                 .order('position', { ascending: true });
@@ -1347,7 +1347,7 @@ List: {{list_name}}</textarea>
             }));
 
             // Load stats
-            const { data: statsData } = await supabase
+            const { data: statsData } = await supabaseClient
                 .from('stats')
                 .select('*')
                 .single();
