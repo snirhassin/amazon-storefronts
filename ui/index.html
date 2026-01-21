@@ -896,16 +896,20 @@ Products: {{products}}
 Theme: {{list_name}}</textarea>
                             <div style="margin-top: 15px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                                 <select id="imageDimensions" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                                    <option value="1200x628">Facebook Feed (1200x628)</option>
-                                    <option value="1080x1080">Square (1080x1080)</option>
-                                    <option value="1080x1920">Story (1080x1920)</option>
+                                    <option value="all">All FB Sizes (3 images)</option>
+                                    <option value="1080x1080">Square 1:1 (1080x1080)</option>
+                                    <option value="1200x628">Landscape 1.91:1 (1200x628)</option>
+                                    <option value="1080x1920">Story 9:16 (1080x1920)</option>
                                 </select>
                                 <select id="imageCount" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                                    <option value="6">6 images</option>
-                                    <option value="3">3 images</option>
-                                    <option value="9">9 images</option>
+                                    <option value="1">1 variation</option>
+                                    <option value="2">2 variations</option>
+                                    <option value="3" selected>3 variations</option>
                                 </select>
-                                <button class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;" onclick="generateDraftImages()">Generate Images</button>
+                                <button class="btn btn-primary" id="generateImagesBtn" style="padding: 8px 16px; font-size: 13px;" onclick="generateDraftImages()">
+                                    <span id="generateBtnText">Generate with Nano Banana</span>
+                                    <span id="generateBtnSpinner" style="display: none;">⏳ Generating...</span>
+                                </button>
                             </div>
 
                             <!-- Follow-up Prompt Section -->
@@ -2366,60 +2370,201 @@ List: {{list_name}}</textarea>
         // Image prompt history for refinement
         let imagePromptHistory = [];
         let adCopyPromptHistory = [];
+        let generatedImages = []; // Store generated image data
 
-        // Generate mock images (6 by default)
-        function generateDraftImages() {
-            const dimensions = document.getElementById('imageDimensions').value;
-            const count = parseInt(document.getElementById('imageCount')?.value) || 6;
+        // Facebook Ad sizes configuration
+        const FB_AD_SIZES = {
+            '1080x1080': { width: 1080, height: 1080, name: 'Square (1:1)', aspectRatio: '1:1' },
+            '1200x628': { width: 1200, height: 628, name: 'Landscape (1.91:1)', aspectRatio: '1.91:1' },
+            '1080x1920': { width: 1080, height: 1920, name: 'Story (9:16)', aspectRatio: '9:16' }
+        };
+
+        // Generate images using Nano Banana (Gemini) API
+        async function generateDraftImages() {
+            const dimensionSelect = document.getElementById('imageDimensions').value;
+            const variations = parseInt(document.getElementById('imageCount')?.value) || 3;
             const grid = document.getElementById('draftImagesGrid');
+            const prompt = document.getElementById('draftImagePrompt').value;
 
-            // Mock image generation with placeholder gradients
-            const imageStyles = [
-                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-                'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-                'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
-                'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
-                'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
-                'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)'
-            ];
-
-            const imageTypes = ['Product Collage', 'Lifestyle Shot', 'Deal Banner', 'Feature Highlight', 'Brand Story', 'Social Proof', 'Comparison', 'Seasonal', 'Testimonial'];
+            // Determine which sizes to generate
+            const sizesToGenerate = dimensionSelect === 'all'
+                ? Object.keys(FB_AD_SIZES)
+                : [dimensionSelect];
 
             // Store initial prompt in history
-            const initialPrompt = document.getElementById('draftImagePrompt').value;
             if (imagePromptHistory.length === 0) {
-                imagePromptHistory.push({ type: 'initial', prompt: initialPrompt });
+                imagePromptHistory.push({ type: 'initial', prompt: prompt });
             }
 
-            grid.innerHTML = '';
-            for (let i = 0; i < count; i++) {
-                const style = imageStyles[i % imageStyles.length];
-                const type = imageTypes[i % imageTypes.length];
-                const isLight = i >= 3;
+            // Show loading state
+            const btn = document.getElementById('generateImagesBtn');
+            const btnText = document.getElementById('generateBtnText');
+            const btnSpinner = document.getElementById('generateBtnSpinner');
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            btnSpinner.style.display = 'inline';
 
+            // Clear grid and show loading placeholders
+            grid.innerHTML = '';
+            const totalImages = sizesToGenerate.length * variations;
+            for (let i = 0; i < totalImages; i++) {
                 grid.innerHTML += `
-                    <div class="creative-card" onclick="toggleImageSelect(this)" data-image="${i + 1}"
-                         style="border: 2px solid #eee; border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s;">
-                        <div style="height: 120px; background: ${style}; display: flex; align-items: center; justify-content: center; color: ${isLight ? '#666' : 'white'}; font-size: 12px; text-align: center; padding: 10px;">
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 3px;">${type}</div>
-                                <div style="font-size: 10px; opacity: 0.8;">${dimensions}</div>
-                            </div>
+                    <div class="creative-card" id="image-placeholder-${i}" style="border: 2px solid #eee; border-radius: 12px; overflow: hidden;">
+                        <div style="height: 120px; background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%); display: flex; align-items: center; justify-content: center;">
+                            <span style="color: #999;">⏳ Generating...</span>
                         </div>
-                        <div style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 13px;"><strong>Image ${i + 1}</strong></span>
-                            <input type="checkbox" style="width: 16px; height: 16px;">
-                        </div>
+                        <div style="padding: 10px;"><span style="font-size: 13px; color: #999;">Loading...</span></div>
                     </div>
                 `;
             }
 
+            generatedImages = [];
+            let imageIndex = 0;
+
+            try {
+                for (const size of sizesToGenerate) {
+                    const sizeConfig = FB_AD_SIZES[size];
+
+                    for (let v = 0; v < variations; v++) {
+                        const variationPrompt = variations > 1
+                            ? `${prompt}\n\nVariation ${v + 1}: Create a unique visual approach.`
+                            : prompt;
+
+                        try {
+                            const imageData = await generateImageWithGemini(variationPrompt, sizeConfig);
+
+                            if (imageData) {
+                                generatedImages.push({
+                                    index: imageIndex,
+                                    size: size,
+                                    sizeName: sizeConfig.name,
+                                    variation: v + 1,
+                                    data: imageData,
+                                    prompt: variationPrompt
+                                });
+
+                                // Update the placeholder with actual image
+                                updateImageCard(imageIndex, imageData, sizeConfig.name, v + 1);
+                            } else {
+                                // Show error for this image
+                                updateImageCardError(imageIndex, sizeConfig.name, v + 1);
+                            }
+                        } catch (err) {
+                            console.error(`Error generating image ${imageIndex}:`, err);
+                            updateImageCardError(imageIndex, sizeConfig.name, v + 1, err.message);
+                        }
+
+                        imageIndex++;
+                    }
+                }
+            } catch (error) {
+                console.error('Image generation error:', error);
+                alert('Error generating images: ' + error.message);
+            }
+
+            // Reset button state
+            btn.disabled = false;
+            btnText.style.display = 'inline';
+            btnSpinner.style.display = 'none';
+
             // Show follow-up section
             document.getElementById('imageFollowupSection').style.display = 'block';
             updatePromptHistory('image');
+        }
+
+        // Call Gemini API to generate image
+        async function generateImageWithGemini(prompt, sizeConfig) {
+            const apiKey = window.GEMINI_API_KEY;
+            if (!apiKey) {
+                throw new Error('Gemini API key not configured');
+            }
+
+            // Using Gemini 2.0 Flash for image generation
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`;
+
+            const requestBody = {
+                contents: [{
+                    parts: [{
+                        text: `Generate a Facebook ad image with these specifications:
+- Aspect ratio: ${sizeConfig.aspectRatio}
+- Dimensions: ${sizeConfig.width}x${sizeConfig.height}
+- Style: Professional, high-quality advertising creative
+- Purpose: Facebook/Instagram ad for e-commerce products
+
+Creative brief:
+${prompt}`
+                    }]
+                }],
+                generationConfig: {
+                    responseModalities: ["TEXT", "IMAGE"]
+                }
+            };
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error?.message || `API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Extract image from response
+            const parts = data.candidates?.[0]?.content?.parts || [];
+            for (const part of parts) {
+                if (part.inlineData?.mimeType?.startsWith('image/')) {
+                    return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                }
+            }
+
+            return null;
+        }
+
+        // Update image card with generated image
+        function updateImageCard(index, imageData, sizeName, variation) {
+            const placeholder = document.getElementById(`image-placeholder-${index}`);
+            if (placeholder) {
+                placeholder.outerHTML = `
+                    <div class="creative-card" onclick="toggleImageSelect(this)" data-image="${index + 1}" data-image-data="${index}"
+                         style="border: 2px solid #eee; border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s;">
+                        <div style="height: 120px; background-image: url('${imageData}'); background-size: cover; background-position: center;"></div>
+                        <div style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 12px; font-weight: 600;">${sizeName}</div>
+                                <div style="font-size: 10px; color: #666;">Var ${variation}</div>
+                            </div>
+                            <input type="checkbox" style="width: 16px; height: 16px;" checked>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Update image card with error state
+        function updateImageCardError(index, sizeName, variation, errorMsg = 'Failed') {
+            const placeholder = document.getElementById(`image-placeholder-${index}`);
+            if (placeholder) {
+                placeholder.outerHTML = `
+                    <div class="creative-card" data-image="${index + 1}"
+                         style="border: 2px solid #f5c6cb; border-radius: 12px; overflow: hidden; background: #fff5f5;">
+                        <div style="height: 120px; display: flex; align-items: center; justify-content: center; color: #721c24; font-size: 12px; text-align: center; padding: 10px;">
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 5px;">❌ Generation Failed</div>
+                                <div style="font-size: 10px; opacity: 0.8;">${errorMsg.substring(0, 50)}</div>
+                            </div>
+                        </div>
+                        <div style="padding: 10px;">
+                            <div style="font-size: 12px;">${sizeName} - Var ${variation}</div>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         // Handle image file upload
