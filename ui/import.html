@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Data - Amazon Storefronts Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .nav-tabs {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            padding: 0 30px;
+        }
+
+        .nav-tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            color: #667eea;
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .upload-zone {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .upload-zone svg {
+            width: 48px;
+            height: 48px;
+            color: #999;
+            margin-bottom: 15px;
+        }
+
+        .upload-zone h3 {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .upload-zone span {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .upload-zone input {
+            display: none;
+        }
+
+        .file-list {
+            margin: 20px 0;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .file-item .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-item svg {
+            width: 24px;
+            height: 24px;
+            color: #28a745;
+        }
+
+        .file-item .file-name {
+            font-weight: 500;
+        }
+
+        .file-item .file-size {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .file-item .remove-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 1px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9ff;
+        }
+
+        .preview-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .preview-section.active {
+            display: block;
+        }
+
+        .preview-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .preview-table {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+
+        .preview-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .preview-table th, .preview-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .preview-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 13px;
+            position: sticky;
+            top: 0;
+        }
+
+        .preview-table td {
+            font-size: 14px;
+        }
+
+        .download-section {
+            display: none;
+            margin-top: 30px;
+            text-align: center;
+            padding: 30px;
+            background: #d4edda;
+            border-radius: 8px;
+        }
+
+        .download-section.active {
+            display: block;
+        }
+
+        .download-section h3 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        .download-section p {
+            color: #155724;
+            margin-bottom: 20px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #999;
+        }
+
+        .step.active {
+            color: #667eea;
+        }
+
+        .step.completed {
+            color: #28a745;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .step.active .step-number {
+            background: #667eea;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+            color: white;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .instructions h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            color: #856404;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .instructions code {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Amazon Storefronts Manager</h1>
+    </div>
+
+    <div class="nav-tabs">
+        <a href="index.html" class="nav-tab">Dashboard</a>
+        <a href="import.html" class="nav-tab active">Import Data</a>
+    </div>
+
+    <div class="container">
+        <div class="steps">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <span>Upload CSV Files</span>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <span>Preview Data</span>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <span>Download JSON</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Import Scraped Data</h2>
+            <p>Upload your storefronts.csv and lists.csv files from the scraper output to generate optimized JSON files for the dashboard.</p>
+
+            <div class="upload-zone" id="storefrontsUpload">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17,8 12,3 7,8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3>Upload storefronts.csv</h3>
+                <span>Drag & drop or click to browse</span>
+                <input type="file" id="storefrontsFile" accept=".csv">
+            </div>
+
+            <div class="upload-zone" id="listsUpload">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17,8 12,3 7,8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3>Upload lists.csv</h3>
+                <span>Drag & drop or click to browse</span>
+                <input type="file" id="listsFile" accept=".csv">
+            </div>
+
+            <div class="file-list" id="fileList"></div>
+
+            <button class="btn btn-primary" id="processBtn" disabled onclick="processFiles()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                </svg>
+                Process Files
+            </button>
+        </div>
+
+        <div class="preview-section" id="previewSection">
+            <div class="card">
+                <h2>Data Preview</h2>
+
+                <div class="preview-stats">
+                    <div class="stat-card">
+                        <div class="value" id="previewStorefronts">0</div>
+                        <div class="label">Storefronts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="previewTopCreators">0</div>
+                        <div class="label">Top Creators</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="previewLists">0</div>
+                        <div class="label">Lists</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="previewLikes">0</div>
+                        <div class="label">Total Likes</div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 20px 0 10px;">Top Storefronts by List Likes</h3>
+                <div class="preview-table" id="previewTable"></div>
+            </div>
+        </div>
+
+        <div class="download-section" id="downloadSection">
+            <h3>JSON Files Generated Successfully!</h3>
+            <p>Download the files and replace them in your ui/data/ folder, then push to deploy.</p>
+            <div class="download-buttons">
+                <button class="btn btn-primary" onclick="downloadStorefrontsJSON()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7,10 12,15 17,10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download storefronts.json
+                </button>
+                <button class="btn btn-primary" onclick="downloadListsJSON()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7,10 12,15 17,10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download lists.json
+                </button>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h4>After downloading the JSON files:</h4>
+            <ol>
+                <li>Move the downloaded files to <code>ui/data/</code> folder in your project</li>
+                <li>Commit the changes: <code>git add ui/data/*.json && git commit -m "Update data"</code></li>
+                <li>Push to deploy: <code>git push</code></li>
+                <li>Vercel will auto-deploy within ~1 minute</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let storefrontsFile = null;
+        let listsFile = null;
+        let processedStorefronts = null;
+        let processedLists = null;
+        let generatedStorefrontsJSON = null;
+        let generatedListsJSON = null;
+
+        // Setup upload zones
+        ['storefronts', 'lists'].forEach(type => {
+            const zone = document.getElementById(`${type}Upload`);
+            const input = document.getElementById(`${type}File`);
+
+            zone.addEventListener('click', () => input.click());
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(type, e.dataTransfer.files[0]);
+                }
+            });
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(type, e.target.files[0]);
+                }
+            });
+        });
+
+        function handleFile(type, file) {
+            if (type === 'storefronts') {
+                storefrontsFile = file;
+            } else {
+                listsFile = file;
+            }
+            updateFileList();
+            updateProcessButton();
+        }
+
+        function updateFileList() {
+            const list = document.getElementById('fileList');
+            let html = '';
+
+            if (storefrontsFile) {
+                html += createFileItem('storefronts', storefrontsFile);
+            }
+            if (listsFile) {
+                html += createFileItem('lists', listsFile);
+            }
+
+            list.innerHTML = html;
+        }
+
+        function createFileItem(type, file) {
+            return `
+                <div class="file-item">
+                    <div class="file-info">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <div>
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${formatBytes(file.size)}</div>
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFile('${type}')">Remove</button>
+                </div>
+            `;
+        }
+
+        function removeFile(type) {
+            if (type === 'storefronts') {
+                storefrontsFile = null;
+                document.getElementById('storefrontsFile').value = '';
+            } else {
+                listsFile = null;
+                document.getElementById('listsFile').value = '';
+            }
+            updateFileList();
+            updateProcessButton();
+        }
+
+        function updateProcessButton() {
+            const btn = document.getElementById('processBtn');
+            btn.disabled = !storefrontsFile || !listsFile;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString();
+        }
+
+        // Parse CSV
+        function parseCSV(text) {
+            text = text.replace(/^\uFEFF/, '');
+            const lines = text.split('\n').filter(l => l.trim());
+            if (lines.length < 2) return [];
+
+            const headers = parseCSVLine(lines[0]);
+            const data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                const obj = {};
+                headers.forEach((h, idx) => {
+                    obj[h] = values[idx] || '';
+                });
+                data.push(obj);
+            }
+
+            return data;
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        async function processFiles() {
+            const btn = document.getElementById('processBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Processing...';
+
+            try {
+                // Read files
+                const storefrontsText = await storefrontsFile.text();
+                const listsText = await listsFile.text();
+
+                // Parse CSVs
+                const storefrontsRaw = parseCSV(storefrontsText);
+                const listsRaw = parseCSV(listsText);
+
+                // Calculate total list likes per storefront
+                const listLikesByStorefront = {};
+                const listCountByStorefront = {};
+                listsRaw.forEach(list => {
+                    const sid = list.storefront_id;
+                    listLikesByStorefront[sid] = (listLikesByStorefront[sid] || 0) + (parseInt(list.likes_count) || 0);
+                    listCountByStorefront[sid] = (listCountByStorefront[sid] || 0) + 1;
+                });
+
+                // Filter successful storefronts and transform
+                processedStorefronts = storefrontsRaw
+                    .filter(s => s.scrape_status === 'success')
+                    .map(s => ({
+                        id: s.storefront_id,
+                        url: s.storefront_url,
+                        username: s.username,
+                        name: s.creator_name || '',
+                        bio: s.bio || '',
+                        image: s.profile_image_url || '',
+                        isTop: s.is_top_creator === 'true',
+                        likes: parseInt(s.storefront_likes) || 0,
+                        lists: parseInt(s.total_lists) || listCountByStorefront[s.storefront_id] || 0,
+                        totalListLikes: listLikesByStorefront[s.storefront_id] || 0,
+                        marketplace: s.marketplace || 'US'
+                    }))
+                    .sort((a, b) => b.totalListLikes - a.totalListLikes);
+
+                // Calculate stats
+                const stats = {
+                    total: processedStorefronts.length,
+                    topCreators: processedStorefronts.filter(s => s.isTop).length,
+                    totalLists: listsRaw.length,
+                    totalLikes: Object.values(listLikesByStorefront).reduce((a, b) => a + b, 0),
+                    lastUpdated: new Date().toISOString()
+                };
+
+                // Transform lists
+                processedLists = listsRaw.map(l => ({
+                    id: l.list_id,
+                    storefront: l.storefront_id,
+                    name: l.list_name,
+                    url: l.list_url,
+                    likes: parseInt(l.likes_count) || 0,
+                    products: parseInt(l.products_count) || 0
+                })).sort((a, b) => b.likes - a.likes);
+
+                // Generate JSON
+                generatedStorefrontsJSON = {
+                    stats,
+                    data: processedStorefronts
+                };
+
+                generatedListsJSON = {
+                    total: processedLists.length,
+                    data: processedLists
+                };
+
+                // Update preview
+                document.getElementById('previewStorefronts').textContent = stats.total;
+                document.getElementById('previewTopCreators').textContent = stats.topCreators;
+                document.getElementById('previewLists').textContent = stats.totalLists.toLocaleString();
+                document.getElementById('previewLikes').textContent = formatNumber(stats.totalLikes);
+
+                // Show preview table
+                const previewTable = document.getElementById('previewTable');
+                previewTable.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Top Creator</th>
+                                <th>Lists</th>
+                                <th>Total Likes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${processedStorefronts.slice(0, 10).map(s => `
+                                <tr>
+                                    <td>${s.username}</td>
+                                    <td>${s.isTop ? 'Yes' : 'No'}</td>
+                                    <td>${s.lists}</td>
+                                    <td>${formatNumber(s.totalListLikes)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                // Show preview and download sections
+                document.getElementById('previewSection').classList.add('active');
+                document.getElementById('downloadSection').classList.add('active');
+
+                // Update steps
+                document.getElementById('step1').classList.remove('active');
+                document.getElementById('step1').classList.add('completed');
+                document.getElementById('step2').classList.add('active');
+                document.getElementById('step2').classList.add('completed');
+                document.getElementById('step3').classList.add('active');
+
+                btn.innerHTML = 'Processing Complete!';
+
+            } catch (error) {
+                alert('Error processing files: ' + error.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Process Files';
+            }
+        }
+
+        function downloadStorefrontsJSON() {
+            const blob = new Blob([JSON.stringify(generatedStorefrontsJSON, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'storefronts.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadListsJSON() {
+            const blob = new Blob([JSON.stringify(generatedListsJSON, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lists.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

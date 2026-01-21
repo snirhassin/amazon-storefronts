@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Draft - Amazon Storefronts Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .breadcrumb {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb span {
+            margin: 0 10px;
+            color: #999;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            gap: 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            color: #999;
+            position: relative;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            width: 40px;
+            height: 2px;
+            background: #ddd;
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .step.active {
+            color: #667eea;
+        }
+
+        .step.completed {
+            color: #28a745;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .step.active .step-number {
+            background: #667eea;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+            color: white;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-body {
+            padding: 25px;
+        }
+
+        .list-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .list-info h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .list-info p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .list-meta {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .meta-item {
+            text-align: center;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .meta-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .products-preview {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            gap: 15px;
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-title {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .product-asin {
+            font-size: 12px;
+            color: #999;
+            font-family: monospace;
+        }
+
+        .product-price {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .prompt-section {
+            margin-top: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .prompt-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .prompt-header:hover {
+            background: #f0f0f0;
+        }
+
+        .prompt-toggle {
+            font-size: 20px;
+            color: #999;
+            transition: transform 0.2s;
+        }
+
+        .prompt-section.open .prompt-toggle {
+            transform: rotate(180deg);
+        }
+
+        .prompt-body {
+            display: none;
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .prompt-section.open .prompt-body {
+            display: block;
+        }
+
+        .prompt-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .prompt-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 1px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9ff;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .generated-options {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .option-card {
+            border: 2px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-card:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .option-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option-card input[type="radio"],
+        .option-card input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .option-label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .option-text {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .editable-field {
+            margin-bottom: 20px;
+        }
+
+        .editable-field label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .editable-field input,
+        .editable-field textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .editable-field textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .editable-field input:focus,
+        .editable-field textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .creative-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .creative-card {
+            border: 2px solid #eee;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .creative-card:hover {
+            border-color: #667eea;
+        }
+
+        .creative-card.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .creative-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .creative-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .creative-info {
+            padding: 15px;
+        }
+
+        .creative-info h4 {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .creative-info p {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .checkbox-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .ad-copy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .ad-copy-card {
+            border: 2px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .ad-copy-card:hover {
+            border-color: #667eea;
+        }
+
+        .ad-copy-card.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .ad-copy-card h4 {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .ad-copy-card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .campaign-form {
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f0f0f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #d4edda;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: #28a745;
+        }
+
+        .success-message h2 {
+            margin-bottom: 10px;
+            color: #28a745;
+        }
+
+        .success-message p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e7f1ff;
+            color: #0056b3;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .regenerate-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Create Draft</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
+            <a href="index.html" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="breadcrumb">
+        <a href="index.html">Dashboard</a>
+        <span>></span>
+        <a href="index.html#lists">Lists</a>
+        <span>></span>
+        <strong id="breadcrumbListName">Daily Deals</strong>
+    </div>
+
+    <div class="container">
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <span>List Overview</span>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <span>Facebook Creative</span>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <span>Campaign Setup</span>
+            </div>
+        </div>
+
+        <!-- Step 1: List Overview -->
+        <div id="section-overview" class="section">
+            <div class="section-header">
+                <h2>List Overview</h2>
+                <span class="tag">Step 1 of 3</span>
+            </div>
+            <div class="section-body">
+                <div class="list-overview">
+                    <div class="list-info">
+                        <h3 id="listTitle">Daily Deals</h3>
+                        <p id="listDescription">Curated collection of today's best deals and discounts from top brands. Updated daily with the hottest finds!</p>
+
+                        <div class="list-meta">
+                            <div class="meta-item">
+                                <div class="meta-value" id="productCount">32</div>
+                                <div class="meta-label">Products</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-value" id="listLikes">507</div>
+                                <div class="meta-label">Likes</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-value" id="storefrontName">teresalaucar</div>
+                                <div class="meta-label">Storefront</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="products-preview" id="productsPreview">
+                        <!-- Products will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- AI Prompts for Title/Description -->
+                <div class="prompt-section" id="titlePromptSection">
+                    <div class="prompt-header" onclick="togglePrompt('titlePromptSection')">
+                        <span>AI Title & Description Generator</span>
+                        <span class="prompt-toggle">▼</span>
+                    </div>
+                    <div class="prompt-body">
+                        <div class="editable-field">
+                            <label>System Prompt for Title Generation</label>
+                            <textarea class="prompt-textarea" id="titleSystemPrompt">You are a marketing copywriter. Generate 3 alternative catchy titles for an Amazon product list. The title should be engaging, concise (under 60 characters), and highlight the value proposition. Consider the products in the list and create titles that would appeal to shoppers.
+
+List name: {{list_name}}
+Products: {{product_names}}
+
+Generate 3 alternative titles, each on a new line.</textarea>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="generateTitles()">
+                            Generate Titles
+                        </button>
+
+                        <div class="generated-options" id="generatedTitles" style="display: none;">
+                            <h4 style="margin-bottom: 10px;">Select a title:</h4>
+                            <!-- Generated titles will appear here -->
+                        </div>
+
+                        <div class="editable-field" style="margin-top: 20px;">
+                            <label>System Prompt for Description Generation</label>
+                            <textarea class="prompt-textarea" id="descSystemPrompt">You are a marketing copywriter. Generate 3 alternative descriptions for an Amazon product list. The description should be 2-3 sentences, highlight key benefits, and create urgency.
+
+List name: {{list_name}}
+Products: {{product_names}}
+
+Generate 3 alternative descriptions, each separated by ---</textarea>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="generateDescriptions()">
+                            Generate Descriptions
+                        </button>
+
+                        <div class="generated-options" id="generatedDescriptions" style="display: none;">
+                            <h4 style="margin-bottom: 10px;">Select a description:</h4>
+                            <!-- Generated descriptions will appear here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Edit Fields -->
+                <div style="margin-top: 25px;">
+                    <h4 style="margin-bottom: 15px;">Final Title & Description</h4>
+                    <div class="editable-field">
+                        <label>List Title</label>
+                        <input type="text" id="finalTitle" value="Daily Deals">
+                    </div>
+                    <div class="editable-field">
+                        <label>List Description</label>
+                        <textarea id="finalDescription">Curated collection of today's best deals and discounts from top brands. Updated daily with the hottest finds!</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn btn-secondary" onclick="exportList()">Export List</button>
+                <button class="btn btn-primary" onclick="goToStep(2)">
+                    Next: Facebook Creative
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Facebook Creative -->
+        <div id="section-creative" class="section hidden">
+            <div class="section-header">
+                <h2>Facebook Creative</h2>
+                <span class="tag">Step 2 of 3</span>
+            </div>
+            <div class="section-body">
+                <!-- Image Generation -->
+                <h3 style="margin-bottom: 15px;">Ad Images</h3>
+                <div class="prompt-section open" id="imagePromptSection">
+                    <div class="prompt-header" onclick="togglePrompt('imagePromptSection')">
+                        <span>Image Generation Prompts (Nano Banana)</span>
+                        <span class="prompt-toggle">▼</span>
+                    </div>
+                    <div class="prompt-body">
+                        <div class="editable-field">
+                            <label>Image Style Prompt</label>
+                            <textarea class="prompt-textarea" id="imageStylePrompt">Create a vibrant, eye-catching product collage for Facebook ads. Style: Modern, clean, lifestyle photography aesthetic.
+
+Include:
+- Main products from the list arranged attractively
+- Soft gradient background (#f8f9fa to #e9ecef)
+- Subtle drop shadows for depth
+- Price tags or discount badges
+- Brand colors as accents
+
+Products to feature: {{top_products}}
+Theme: {{list_name}}</textarea>
+                        </div>
+                        <div class="editable-field">
+                            <label>Image Dimensions</label>
+                            <select id="imageDimensions">
+                                <option value="1200x628">Facebook Feed (1200x628)</option>
+                                <option value="1080x1080">Square (1080x1080)</option>
+                                <option value="1080x1920">Story (1080x1920)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="generateImages()">
+                            Generate Images
+                        </button>
+                    </div>
+                </div>
+
+                <div class="creative-grid" id="generatedImages">
+                    <div class="creative-card" onclick="toggleCreativeSelect(this)">
+                        <div class="creative-image">
+                            <span>Click "Generate Images" to create</span>
+                        </div>
+                        <div class="creative-info">
+                            <h4>Image 1</h4>
+                            <p>Product collage style</p>
+                        </div>
+                    </div>
+                    <div class="creative-card" onclick="toggleCreativeSelect(this)">
+                        <div class="creative-image">
+                            <span>Waiting for generation...</span>
+                        </div>
+                        <div class="creative-info">
+                            <h4>Image 2</h4>
+                            <p>Lifestyle context</p>
+                        </div>
+                    </div>
+                    <div class="creative-card" onclick="toggleCreativeSelect(this)">
+                        <div class="creative-image">
+                            <span>Waiting for generation...</span>
+                        </div>
+                        <div class="creative-info">
+                            <h4>Image 3</h4>
+                            <p>Deal highlight</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Copy Generation -->
+                <h3 style="margin: 30px 0 15px;">Ad Copy</h3>
+                <div class="prompt-section" id="adCopyPromptSection">
+                    <div class="prompt-header" onclick="togglePrompt('adCopyPromptSection')">
+                        <span>Ad Copy Generation Prompts</span>
+                        <span class="prompt-toggle">▼</span>
+                    </div>
+                    <div class="prompt-body">
+                        <div class="editable-field">
+                            <label>Primary Text Prompt</label>
+                            <textarea class="prompt-textarea" id="primaryTextPrompt">Generate 3 Facebook ad primary texts for a product list promotion. Each should be:
+- 125 characters or less (before "See More")
+- Include a hook, value prop, and CTA
+- Use emojis sparingly but effectively
+- Create urgency without being pushy
+
+List: {{list_name}}
+Top products: {{product_names}}
+Price range: {{price_range}}</textarea>
+                        </div>
+                        <div class="editable-field">
+                            <label>Headline Prompt</label>
+                            <textarea class="prompt-textarea" id="headlinePrompt">Generate 3 Facebook ad headlines (40 characters max each) for a product list. Headlines should:
+- Be punchy and attention-grabbing
+- Include numbers or percentages when relevant
+- Create curiosity or highlight savings
+
+List: {{list_name}}</textarea>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="generateAdCopy()">
+                            Generate Ad Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="ad-copy-grid" id="generatedAdCopy">
+                    <div class="ad-copy-card" onclick="toggleAdCopySelect(this)" data-variant="1">
+                        <input type="checkbox" style="position: absolute; top: 15px; right: 15px;">
+                        <h4>Variant A</h4>
+                        <p><strong>Primary:</strong> Click "Generate" to create ad copy...</p>
+                        <p style="margin-top: 10px;"><strong>Headline:</strong> Waiting...</p>
+                    </div>
+                    <div class="ad-copy-card" onclick="toggleAdCopySelect(this)" data-variant="2">
+                        <input type="checkbox" style="position: absolute; top: 15px; right: 15px;">
+                        <h4>Variant B</h4>
+                        <p><strong>Primary:</strong> Click "Generate" to create ad copy...</p>
+                        <p style="margin-top: 10px;"><strong>Headline:</strong> Waiting...</p>
+                    </div>
+                    <div class="ad-copy-card" onclick="toggleAdCopySelect(this)" data-variant="3">
+                        <input type="checkbox" style="position: absolute; top: 15px; right: 15px;">
+                        <h4>Variant C</h4>
+                        <p><strong>Primary:</strong> Click "Generate" to create ad copy...</p>
+                        <p style="margin-top: 10px;"><strong>Headline:</strong> Waiting...</p>
+                    </div>
+                    <div class="ad-copy-card" onclick="toggleAdCopySelect(this)" data-variant="custom">
+                        <input type="checkbox" style="position: absolute; top: 15px; right: 15px;">
+                        <h4>Custom</h4>
+                        <div class="editable-field" style="margin-top: 10px;">
+                            <input type="text" placeholder="Enter custom headline..." id="customHeadline">
+                        </div>
+                        <div class="editable-field">
+                            <textarea placeholder="Enter custom primary text..." id="customPrimary" style="min-height: 60px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn btn-secondary" onclick="goToStep(1)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    Back
+                </button>
+                <button class="btn btn-primary" onclick="goToStep(3)">
+                    Next: Campaign Setup
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Campaign Setup -->
+        <div id="section-campaign" class="section hidden">
+            <div class="section-header">
+                <h2>Campaign Setup</h2>
+                <span class="tag">Step 3 of 3</span>
+            </div>
+            <div class="section-body">
+                <div class="campaign-form">
+                    <div class="form-group">
+                        <label>Campaign Objective</label>
+                        <select id="campaignObjective">
+                            <option value="CONVERSIONS">Conversions</option>
+                            <option value="TRAFFIC">Traffic</option>
+                            <option value="ENGAGEMENT">Engagement</option>
+                            <option value="REACH">Reach</option>
+                            <option value="BRAND_AWARENESS">Brand Awareness</option>
+                        </select>
+                        <div class="form-hint">Choose the primary goal for your campaign</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Campaign Name Template</label>
+                        <input type="text" id="campaignNameTemplate" value="{{storefront}}_{{list_name}}_{{date}}">
+                        <div class="form-hint">Variables: {{storefront}}, {{list_name}}, {{date}}, {{objective}}</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Preview Campaign Name</label>
+                        <input type="text" id="campaignNamePreview" value="teresalaucar_DailyDeals_2026-01-21" readonly style="background: #f8f9fa;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Daily Budget</label>
+                        <input type="number" id="dailyBudget" value="20" min="1">
+                        <div class="form-hint">Minimum $1/day</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Target Audience</label>
+                        <select id="targetAudience">
+                            <option value="broad">Broad - Let Facebook optimize</option>
+                            <option value="interest">Interest-based targeting</option>
+                            <option value="lookalike">Lookalike audience</option>
+                            <option value="retargeting">Retargeting</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ad Placements</label>
+                        <select id="adPlacements">
+                            <option value="automatic">Automatic Placements (Recommended)</option>
+                            <option value="feed">Feed Only</option>
+                            <option value="stories">Stories Only</option>
+                            <option value="manual">Manual Selection</option>
+                        </select>
+                    </div>
+
+                    <h4 style="margin: 30px 0 15px;">Selected Creative Summary</h4>
+                    <div id="creativeSummary" style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <p><strong>Images:</strong> <span id="selectedImagesCount">0</span> selected</p>
+                        <p><strong>Ad Copy Variants:</strong> <span id="selectedCopyCount">0</span> selected</p>
+                        <p><strong>Total Ad Combinations:</strong> <span id="totalCombinations">0</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn btn-secondary" onclick="goToStep(2)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    Back
+                </button>
+                <button class="btn btn-success" onclick="uploadToFacebook()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17,8 12,3 7,8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload to Facebook
+                </button>
+            </div>
+        </div>
+
+        <!-- Success State -->
+        <div id="section-success" class="section hidden">
+            <div class="success-message">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20,6 9,17 4,12"/>
+                    </svg>
+                </div>
+                <h2>Campaign Created Successfully!</h2>
+                <p>Your campaign has been uploaded to Facebook Ads Manager.</p>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px auto; max-width: 400px; text-align: left;">
+                    <p><strong>Campaign:</strong> <span id="finalCampaignName">teresalaucar_DailyDeals_2026-01-21</span></p>
+                    <p><strong>Status:</strong> Pending Review</p>
+                    <p><strong>Budget:</strong> $<span id="finalBudget">20</span>/day</p>
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <a href="index.html" class="btn btn-secondary">Back to Dashboard</a>
+                    <button class="btn btn-primary" onclick="viewInFacebook()">View in Ads Manager</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Generating...</div>
+    </div>
+
+    <script>
+        // State
+        let currentStep = 1;
+        let listData = null;
+        let listProducts = [];
+        let selectedImages = new Set();
+        let selectedAdCopy = new Set();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadListData();
+            updateCampaignNamePreview();
+        });
+
+        // Load list data from URL params or use mock data
+        function loadListData() {
+            const params = new URLSearchParams(window.location.search);
+            const listId = params.get('list');
+            const storefrontId = params.get('storefront');
+
+            // Mock data for demo
+            listData = {
+                id: listId || '1W5128R4GFO1N',
+                name: 'Daily Deals',
+                description: 'Curated collection of today\'s best deals and discounts from top brands. Updated daily with the hottest finds!',
+                storefront: storefrontId || 'teresalaucar',
+                likes: 507,
+                productCount: 32
+            };
+
+            // Mock products
+            listProducts = [
+                { asin: 'B0FQ2QCZXK', title: 'CAROTE 18Pcs Ceramic Cookware Set with Detachable Handle', price: 67.19, image: 'https://m.media-amazon.com/images/I/51vwSaTN7AL._AC_SX200_.jpg' },
+                { asin: 'B0B288QLYD', title: 'Aheaplus Rotating Bookshelf, Small Corner Bookshelf', price: 89.98, image: 'https://m.media-amazon.com/images/I/414Fd+Gq3PL._AC_SX200_.jpg' },
+                { asin: 'B0BTCZ2RR9', title: 'Digital Camera, FHD 1080P Point and Shoot Camera', price: 49.99, image: 'https://m.media-amazon.com/images/I/41U4BUHtGEL._AC_SX200_.jpg' },
+                { asin: 'B09V3KXJPB', title: 'Wireless Earbuds, Bluetooth 5.3 Headphones', price: 29.99, image: 'https://m.media-amazon.com/images/I/51X7tCvMwHL._AC_SX200_.jpg' },
+                { asin: 'B0BSHF7WHW', title: 'Portable Blender, Personal Size Blender for Shakes', price: 24.99, image: 'https://m.media-amazon.com/images/I/61Ky0-wjHpL._AC_SX200_.jpg' }
+            ];
+
+            // Try to load from actual data
+            loadActualData(listId, storefrontId);
+
+            // Update UI
+            updateUI();
+        }
+
+        // Try to load actual data from JSON
+        async function loadActualData(listId, storefrontId) {
+            try {
+                const basePath = window.location.pathname.includes('/ui/') ? './data/' : '/ui/data/';
+
+                // Load lists
+                const listsResponse = await fetch(basePath + 'lists.json');
+                const listsJSON = await listsResponse.json();
+                const list = listsJSON.data.find(l => l.id === listId);
+
+                if (list) {
+                    listData = {
+                        id: list.id,
+                        name: list.name,
+                        description: `Products from ${list.storefront}'s curated collection.`,
+                        storefront: list.storefront,
+                        likes: list.likes,
+                        productCount: list.products
+                    };
+                }
+
+                // Load products
+                const productsResponse = await fetch(basePath + 'products.json');
+                if (productsResponse.ok) {
+                    const productsJSON = await productsResponse.json();
+                    const products = productsJSON.data.filter(p => p.listId === listId);
+                    if (products.length > 0) {
+                        listProducts = products.slice(0, 10).map(p => ({
+                            asin: p.asin,
+                            title: p.title,
+                            price: p.price,
+                            image: p.image || 'https://via.placeholder.com/50'
+                        }));
+                    }
+                }
+
+                updateUI();
+            } catch (e) {
+                console.log('Using mock data');
+            }
+        }
+
+        // Update UI with list data
+        function updateUI() {
+            document.getElementById('breadcrumbListName').textContent = listData.name;
+            document.getElementById('listTitle').textContent = listData.name;
+            document.getElementById('listDescription').textContent = listData.description;
+            document.getElementById('productCount').textContent = listData.productCount;
+            document.getElementById('listLikes').textContent = listData.likes;
+            document.getElementById('storefrontName').textContent = listData.storefront;
+            document.getElementById('finalTitle').value = listData.name;
+            document.getElementById('finalDescription').value = listData.description;
+
+            // Render products preview
+            const productsPreview = document.getElementById('productsPreview');
+            productsPreview.innerHTML = listProducts.map(p => `
+                <div class="product-item">
+                    <img src="${p.image}" alt="" class="product-image" onerror="this.src='https://via.placeholder.com/50'">
+                    <div class="product-info">
+                        <div class="product-title">${p.title.substring(0, 50)}${p.title.length > 50 ? '...' : ''}</div>
+                        <div class="product-asin">${p.asin}</div>
+                    </div>
+                    <div class="product-price">${p.price ? '$' + p.price.toFixed(2) : '-'}</div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle prompt section
+        function togglePrompt(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('open');
+        }
+
+        // Generate titles (mock)
+        function generateTitles() {
+            showLoading('Generating titles...');
+
+            setTimeout(() => {
+                hideLoading();
+                const container = document.getElementById('generatedTitles');
+                container.style.display = 'block';
+                container.innerHTML = `
+                    <h4 style="margin-bottom: 10px;">Select a title:</h4>
+                    <div class="option-card" onclick="selectTitle(this, 'Top Deals You Can\\'t Miss Today!')">
+                        <input type="radio" name="title" value="1">
+                        <span class="option-text">Top Deals You Can't Miss Today!</span>
+                    </div>
+                    <div class="option-card" onclick="selectTitle(this, 'Save Big: Curated Finds Under $100')">
+                        <input type="radio" name="title" value="2">
+                        <span class="option-text">Save Big: Curated Finds Under $100</span>
+                    </div>
+                    <div class="option-card" onclick="selectTitle(this, 'Today\\'s Best Picks for Smart Shoppers')">
+                        <input type="radio" name="title" value="3">
+                        <span class="option-text">Today's Best Picks for Smart Shoppers</span>
+                    </div>
+                    <button class="btn btn-secondary btn-sm regenerate-btn" onclick="generateTitles()">Regenerate</button>
+                `;
+            }, 1500);
+        }
+
+        // Select title
+        function selectTitle(element, title) {
+            document.querySelectorAll('#generatedTitles .option-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+            document.getElementById('finalTitle').value = title;
+        }
+
+        // Generate descriptions (mock)
+        function generateDescriptions() {
+            showLoading('Generating descriptions...');
+
+            setTimeout(() => {
+                hideLoading();
+                const container = document.getElementById('generatedDescriptions');
+                container.style.display = 'block';
+                container.innerHTML = `
+                    <h4 style="margin-bottom: 10px;">Select a description:</h4>
+                    <div class="option-card" onclick="selectDescription(this, 'Discover handpicked deals that save you money without sacrificing quality. From kitchen essentials to tech gadgets, we\\'ve got your wishlist covered.')">
+                        <input type="radio" name="description" value="1">
+                        <span class="option-text">Discover handpicked deals that save you money without sacrificing quality. From kitchen essentials to tech gadgets, we've got your wishlist covered.</span>
+                    </div>
+                    <div class="option-card" onclick="selectDescription(this, 'Why pay more? Browse our daily selection of top-rated products at unbeatable prices. Limited time offers you don\\'t want to miss!')">
+                        <input type="radio" name="description" value="2">
+                        <span class="option-text">Why pay more? Browse our daily selection of top-rated products at unbeatable prices. Limited time offers you don't want to miss!</span>
+                    </div>
+                    <div class="option-card" onclick="selectDescription(this, 'Your one-stop shop for smart savings. We scour thousands of products to bring you the best value every single day.')">
+                        <input type="radio" name="description" value="3">
+                        <span class="option-text">Your one-stop shop for smart savings. We scour thousands of products to bring you the best value every single day.</span>
+                    </div>
+                    <button class="btn btn-secondary btn-sm regenerate-btn" onclick="generateDescriptions()">Regenerate</button>
+                `;
+            }, 1500);
+        }
+
+        // Select description
+        function selectDescription(element, desc) {
+            document.querySelectorAll('#generatedDescriptions .option-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+            document.getElementById('finalDescription').value = desc;
+        }
+
+        // Generate images (mock)
+        function generateImages() {
+            showLoading('Generating images with Nano Banana...');
+
+            setTimeout(() => {
+                hideLoading();
+                const container = document.getElementById('generatedImages');
+                container.innerHTML = `
+                    <div class="creative-card" onclick="toggleCreativeSelect(this)" data-image="1">
+                        <div class="creative-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 12px; padding: 20px;">
+                            [AI Generated Product Collage]<br>
+                            Featured: Cookware Set, Bookshelf, Camera
+                        </div>
+                        <div class="creative-info">
+                            <h4>Product Showcase</h4>
+                            <p>Clean collage with pricing</p>
+                        </div>
+                    </div>
+                    <div class="creative-card" onclick="toggleCreativeSelect(this)" data-image="2">
+                        <div class="creative-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; font-size: 12px; padding: 20px;">
+                            [AI Generated Lifestyle Image]<br>
+                            Home setting with products
+                        </div>
+                        <div class="creative-info">
+                            <h4>Lifestyle Context</h4>
+                            <p>Products in use</p>
+                        </div>
+                    </div>
+                    <div class="creative-card" onclick="toggleCreativeSelect(this)" data-image="3">
+                        <div class="creative-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; font-size: 12px; padding: 20px;">
+                            [AI Generated Deal Banner]<br>
+                            "Up to 50% Off" overlay
+                        </div>
+                        <div class="creative-info">
+                            <h4>Deal Highlight</h4>
+                            <p>Savings-focused</p>
+                        </div>
+                    </div>
+                `;
+                updateCreativeSummary();
+            }, 2000);
+        }
+
+        // Toggle creative selection
+        function toggleCreativeSelect(element) {
+            element.classList.toggle('selected');
+            const imageId = element.dataset.image;
+            if (element.classList.contains('selected')) {
+                selectedImages.add(imageId);
+            } else {
+                selectedImages.delete(imageId);
+            }
+            updateCreativeSummary();
+        }
+
+        // Generate ad copy (mock)
+        function generateAdCopy() {
+            showLoading('Generating ad copy...');
+
+            setTimeout(() => {
+                hideLoading();
+                const container = document.getElementById('generatedAdCopy');
+                container.innerHTML = `
+                    <div class="ad-copy-card" onclick="toggleAdCopySelect(this)" data-variant="1">
+                        <input type="checkbox" style="position: absolute; top: 15px; right: 15px;">
+                        <h4>Variant A - Urgency</h4>
+                        <p><strong>Primary:</strong> These deals won't last! Shop our curated picks before they're gone.</p>
+                        <p style="margin-top: 10px;"><strong>Headline:</strong> Limited Time: Top Picks Inside</p>
+                    </div>
+                    <div class="ad-copy-card" onclick="toggleAdCopySelect(this)" data-variant="2">
+                        <input type="checkbox" style="position: absolute; top: 15px; right: 15px;">
+                        <h4>Variant B - Value</h4>
+                        <p><strong>Primary:</strong> Smart shopping starts here. Discover quality products at prices you'll love.</p>
+                        <p style="margin-top: 10px;"><strong>Headline:</strong> Quality Finds, Great Prices</p>
+                    </div>
+                    <div class="ad-copy-card" onclick="toggleAdCopySelect(this)" data-variant="3">
+                        <input type="checkbox" style="position: absolute; top: 15px; right: 15px;">
+                        <h4>Variant C - Social Proof</h4>
+                        <p><strong>Primary:</strong> Join 500+ happy shoppers who found their favorites in this collection!</p>
+                        <p style="margin-top: 10px;"><strong>Headline:</strong> Fan Favorites Inside</p>
+                    </div>
+                    <div class="ad-copy-card" onclick="toggleAdCopySelect(this)" data-variant="custom">
+                        <input type="checkbox" style="position: absolute; top: 15px; right: 15px;">
+                        <h4>Custom</h4>
+                        <div class="editable-field" style="margin-top: 10px;">
+                            <input type="text" placeholder="Enter custom headline..." id="customHeadline">
+                        </div>
+                        <div class="editable-field">
+                            <textarea placeholder="Enter custom primary text..." id="customPrimary" style="min-height: 60px;"></textarea>
+                        </div>
+                    </div>
+                `;
+                updateCreativeSummary();
+            }, 1500);
+        }
+
+        // Toggle ad copy selection
+        function toggleAdCopySelect(element) {
+            element.classList.toggle('selected');
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            const variant = element.dataset.variant;
+            if (element.classList.contains('selected')) {
+                selectedAdCopy.add(variant);
+            } else {
+                selectedAdCopy.delete(variant);
+            }
+            updateCreativeSummary();
+        }
+
+        // Update creative summary
+        function updateCreativeSummary() {
+            document.getElementById('selectedImagesCount').textContent = selectedImages.size;
+            document.getElementById('selectedCopyCount').textContent = selectedAdCopy.size;
+            document.getElementById('totalCombinations').textContent = selectedImages.size * selectedAdCopy.size;
+        }
+
+        // Update campaign name preview
+        function updateCampaignNamePreview() {
+            const template = document.getElementById('campaignNameTemplate').value;
+            const preview = template
+                .replace('{{storefront}}', listData?.storefront || 'storefront')
+                .replace('{{list_name}}', (listData?.name || 'list').replace(/\s+/g, ''))
+                .replace('{{date}}', new Date().toISOString().split('T')[0])
+                .replace('{{objective}}', document.getElementById('campaignObjective')?.value || 'CONVERSIONS');
+            document.getElementById('campaignNamePreview').value = preview;
+        }
+
+        // Navigation between steps
+        function goToStep(step) {
+            currentStep = step;
+
+            // Update step indicators
+            document.querySelectorAll('.step').forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i + 1 < step) s.classList.add('completed');
+                if (i + 1 === step) s.classList.add('active');
+            });
+
+            // Show/hide sections
+            document.getElementById('section-overview').classList.toggle('hidden', step !== 1);
+            document.getElementById('section-creative').classList.toggle('hidden', step !== 2);
+            document.getElementById('section-campaign').classList.toggle('hidden', step !== 3);
+            document.getElementById('section-success').classList.add('hidden');
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Update campaign name preview when reaching step 3
+            if (step === 3) {
+                updateCampaignNamePreview();
+                updateCreativeSummary();
+            }
+        }
+
+        // Export list
+        function exportList() {
+            const data = listProducts.map(p => ({
+                asin: p.asin,
+                title: p.title,
+                price: p.price,
+                url: `https://www.amazon.com/dp/${p.asin}`
+            }));
+
+            const csv = [
+                'asin,title,price,url',
+                ...data.map(p => `${p.asin},"${p.title}",${p.price || ''},${p.url}`)
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${listData.name.replace(/\s+/g, '_')}_products.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Save draft
+        function saveDraft() {
+            const draft = {
+                list: listData,
+                products: listProducts,
+                title: document.getElementById('finalTitle').value,
+                description: document.getElementById('finalDescription').value,
+                selectedImages: Array.from(selectedImages),
+                selectedAdCopy: Array.from(selectedAdCopy),
+                savedAt: new Date().toISOString()
+            };
+            localStorage.setItem('draft_' + listData.id, JSON.stringify(draft));
+            alert('Draft saved!');
+        }
+
+        // Upload to Facebook (mock)
+        function uploadToFacebook() {
+            if (selectedImages.size === 0 || selectedAdCopy.size === 0) {
+                alert('Please select at least one image and one ad copy variant');
+                return;
+            }
+
+            showLoading('Uploading to Facebook Ads Manager...');
+
+            setTimeout(() => {
+                hideLoading();
+
+                // Update success section
+                document.getElementById('finalCampaignName').textContent = document.getElementById('campaignNamePreview').value;
+                document.getElementById('finalBudget').textContent = document.getElementById('dailyBudget').value;
+
+                // Show success
+                document.getElementById('section-campaign').classList.add('hidden');
+                document.getElementById('section-success').classList.remove('hidden');
+
+                // Update step indicators
+                document.querySelectorAll('.step').forEach(s => s.classList.add('completed'));
+            }, 2500);
+        }
+
+        // View in Facebook (mock)
+        function viewInFacebook() {
+            window.open('https://business.facebook.com/adsmanager', '_blank');
+        }
+
+        // Loading helpers
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Event listeners
+        document.getElementById('campaignNameTemplate')?.addEventListener('input', updateCampaignNamePreview);
+        document.getElementById('campaignObjective')?.addEventListener('change', updateCampaignNamePreview);
+    </script>
+</body>
+</html>

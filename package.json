@@ -1,0 +1,34 @@
+{
+  "name": "amazon-storefronts-manager",
+  "version": "1.0.0",
+  "description": "Discover and scrape Amazon Creator Storefronts at scale - profiles, lists, likes, and products",
+  "main": "src/index.js",
+  "scripts": {
+    "discover": "node src/discovery/index.js",
+    "discover:google": "node src/discovery/google-discovery.js",
+    "discover:amazon": "node src/discovery/founditonamazon.js",
+    "discover:bulk": "node src/discovery/bulk-discovery.js",
+    "discover:lists": "node src/discovery/scrape-influencer-lists.js",
+    "discover:500": "node src/discovery/bulk-discovery.js --target=500",
+    "scrape": "node src/index.js",
+    "scrape:resume": "node src/index.js --resume",
+    "scrape:test": "node src/index.js --test --limit=10",
+    "test:storefront": "node src/scrapers/storefront-scraper.js --test",
+    "convert": "node scripts/csv-to-json.js",
+    "upload": "node scripts/upload-to-supabase.js",
+    "serve": "node serve-ui.js"
+  },
+  "keywords": [
+    "amazon",
+    "storefronts",
+    "influencer",
+    "creator",
+    "scraper",
+    "playwright"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

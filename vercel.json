@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/ui/index.html" },
+    { "source": "/import", "destination": "/ui/import.html" }
+  ],
+  "headers": [
+    {
+      "source": "/ui/data/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300" }
+      ]
+    }
+  ]
+}
