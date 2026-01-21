@@ -1,0 +1,5 @@
+2026/01/21-19:02:23.737 77d0 Creating DB C:\Users\Snir\documents\claude\amazon-storefronts\browser-data\Default\Local Storage\leveldb since it was missing.
+2026/01/21-19:02:23.778 77d0 Reusing MANIFEST C:\Users\Snir\documents\claude\amazon-storefronts\browser-data\Default\Local Storage\leveldb/MANIFEST-000001
+2026/01/21-19:03:23.801 4680 Level-0 table #5: started
+2026/01/21-19:03:23.811 4680 Level-0 table #5: 118775 bytes OK
+2026/01/21-19:03:23.816 4680 Delete type=0 #3
