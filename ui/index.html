@@ -1407,11 +1407,18 @@ List: {{list_name}}</textarea>
                 // Try Supabase first
                 if (initSupabase()) {
                     console.log('Loading data from Supabase...');
-                    await loadFromSupabase();
-                    console.log('Data loaded from Supabase');
+                    console.log('Supabase URL:', SUPABASE_URL);
+                    try {
+                        await loadFromSupabase();
+                        console.log('Data loaded from Supabase');
+                    } catch (supabaseError) {
+                        console.error('Supabase error, falling back to JSON:', supabaseError);
+                        await loadFromJSON();
+                        console.log('Data loaded from JSON (fallback)');
+                    }
                 } else {
                     // Fallback to JSON files
-                    console.log('Loading data from JSON files...');
+                    console.log('Supabase not configured, loading from JSON files...');
                     await loadFromJSON();
                     console.log('Data loaded from JSON');
                 }
@@ -1431,7 +1438,7 @@ List: {{list_name}}</textarea>
             } catch (error) {
                 console.error('Error loading data:', error);
                 document.getElementById('storefrontsBody').innerHTML =
-                    '<tr><td colspan="8" class="empty-state">Error loading data. Check console for details.</td></tr>';
+                    '<tr><td colspan="8" class="empty-state">Error loading data: ' + error.message + '</td></tr>';
             }
         }
 
