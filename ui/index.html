@@ -500,7 +500,7 @@
         <div class="nav-tab active" data-tab="storefronts">Storefronts</div>
         <div class="nav-tab" data-tab="lists">Lists</div>
         <div class="nav-tab" data-tab="products">Products</div>
-        <div class="nav-tab" data-tab="draft" id="draftTab">Draft</div>
+        <div class="nav-tab" data-tab="draft" id="draftTab">Campaigns</div>
         <a href="import.html" class="nav-tab" style="margin-left: auto; text-decoration: none;">Import Data</a>
     </div>
 
@@ -711,7 +711,7 @@
             <!-- List Selector (shown when no list selected) -->
             <div id="draftListSelector" class="table-container" style="margin-bottom: 20px;">
                 <div style="padding: 20px 25px; border-bottom: 1px solid #eee;">
-                    <h2 style="font-size: 18px; font-weight: 600;">Select a List to Draft</h2>
+                    <h2 style="font-size: 18px; font-weight: 600;">Select a List for Campaign</h2>
                 </div>
                 <div style="padding: 25px;">
                     <p style="color: #666; margin-bottom: 20px;">Choose a list from your storefronts to start creating a Facebook campaign.</p>
@@ -730,7 +730,7 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" style="margin-top: 20px;" onclick="startDraftFromSelector()" id="startDraftBtn" disabled>
-                        Start Draft
+                        Start Campaign
                     </button>
                 </div>
             </div>
@@ -745,7 +745,7 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                         <div>
                             <h3 id="draftListTitle" style="font-size: 24px; margin-bottom: 10px;">Select a list</h3>
-                            <p id="draftListDesc" style="color: #666; line-height: 1.6; margin-bottom: 15px;">Click "Draft" on any list to start creating a campaign.</p>
+                            <p id="draftListDesc" style="color: #666; line-height: 1.6; margin-bottom: 15px;">Click "Campaign" on any list to start creating a campaign.</p>
                             <div style="display: flex; gap: 20px; margin-top: 15px;">
                                 <div style="text-align: center; padding: 15px 20px; background: #f8f9fa; border-radius: 8px;">
                                     <div id="draftProductCount" style="font-size: 24px; font-weight: 600; color: #667eea;">0</div>
@@ -1584,7 +1584,7 @@ List: {{list_name}}</textarea>
                                 Export
                             </button>
                             <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="openDraft('${l.id}', '${l.storefront}')">
-                                Draft
+                                Campaign
                             </button>
                         </td>
                     </tr>
