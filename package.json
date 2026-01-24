@@ -14,6 +14,8 @@
     "discover:serpapi:dry": "node scripts/discover-storefronts.js --dry-run",
     "process-queue": "node scripts/process-queue.js",
     "process-queue:100": "node scripts/process-queue.js --limit 100",
+    "process-queue:playwright": "node scripts/process-queue-playwright.js --all",
+    "scraper-server": "node scripts/scraper-server.js",
     "scrape": "node src/index.js",
     "scrape:resume": "node src/index.js --resume",
     "scrape:test": "node src/index.js --test --limit=10",
