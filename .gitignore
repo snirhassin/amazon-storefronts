@@ -5,6 +5,9 @@ node_modules/
 .env
 .env.local
 
+# Secret API keys
+ui/secrets.js
+
 # Data files (large CSVs)
 data/output/*.csv
 
