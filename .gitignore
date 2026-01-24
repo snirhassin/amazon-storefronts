@@ -20,3 +20,7 @@ Thumbs.db
 .vscode/
 
 .vercel
+
+# Browser automation state (contains session cookies)
+browser-state/
+scripts/list-command.json

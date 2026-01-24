@@ -4,3 +4,9 @@ window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
 
 // Nano Banana (Gemini) API configuration
 window.GEMINI_API_KEY = 'AIzaSyAfY2EXDomsIytssBK9B_QG0poXaEvvDhU';
+
+// Facebook Marketing API configuration
+window.FB_APP_ID = '1203974027972884';
+window.FB_APP_SECRET = '9c4065034699e919700ca2a363b660a5';
+window.FB_AD_ACCOUNT_ID = 'act_924375280765176';
+window.FB_API_VERSION = 'v21.0';

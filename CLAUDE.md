@@ -264,6 +264,84 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0dmh4ZGd
 
 ---
 
+## Amazon List Creator (Work in Progress)
+
+**Goal**: Automate creating lists on your Amazon Storefront by copying lists from the tool.
+
+**Storefront ID**: `influencer-03f5875c`
+
+**Create Collection URL**:
+```
+https://www.amazon.com/create/collection?affiliateId=influencer-03f5875c&ref=inf_sf_idealist_influencer-03f5875c
+```
+
+### Scripts Created
+
+| Script | Description |
+|--------|-------------|
+| `scripts/test-selenium.py` | Main Selenium script (WIP) |
+| `scripts/selenium-list-creator.py` | Full interactive version |
+| `scripts/chrome-list-creator.js` | Playwright version (doesn't work - bot detection) |
+| `scripts/chrome-cdp-server.js` | CDP connection version |
+| `scripts/add-asins.js` | Browser console script |
+
+### Current Status
+
+**Selenium approach** (`test-selenium.py`):
+- Uses persistent profile at `browser-state/selenium-profile/`
+- Checks if logged in, prompts if not
+- Goes to create collection page
+- **Issue**: Clicking on product image in modal not working correctly
+
+### How the Amazon UI Works
+
+1. Go to create collection page
+2. Click "ADD PRODUCTS" button
+3. Click "Browse History" tab (3rd tab)
+4. Search for ASIN in search box (input index varies - was 24 in regular Chrome)
+5. Press Enter to search
+6. **Click on product image** in results
+7. **Click "Add Product" button** on next screen
+8. Repeat for each ASIN
+
+### Test List: "Type A Finds" (32 ASINs)
+
+```python
+ASINS = [
+    "B0016HF5GK", "B01728NLRG", "B0764HS4SL", "B07F4128P2", "B07FNRXFTD",
+    "B07MHMBHT7", "B07QPZYRB8", "B08ZY8HT1G", "B0997PYJJT", "B09BJRSZVC",
+    "B09N3WPTY6", "B0B288QLYD", "B0B2K47S1T", "B0BJLBF8S8", "B0BRRPP5KH",
+    "B0BTCZ2RR9", "B0C2C9NHZW", "B0C35D7X75", "B0C7C5NFJ3", "B0C89B5S14",
+    "B0CGVSKR1G", "B0CHHFKWPV", "B0CHYL7R5C", "B0D3139TW6", "B0D313JRLG",
+    "B0D69JSBZ5", "B0D8BQ4LFC", "B0DD5S7KF9", "B0FKBF6TYQ", "B0FL9L2CKD",
+    "B0FM77N3H8", "B0FQ2QCZXK"
+]
+```
+
+### To Resume
+
+1. Run: `python "C:\Users\Snir\documents\claude\amazon-storefronts\scripts\test-selenium.py"`
+2. Log in to Amazon if needed
+3. Click ADD PRODUCTS, then Browse History tab
+4. Press Enter
+5. Debug the image clicking - need to find correct selector for product cards in the modal
+
+### Known Issues
+
+- Playwright gets detected as bot by Amazon/Google
+- Chrome profile mode requires ALL Chrome windows closed
+- Selenium search input index changes between browsers (was 24 in regular Chrome, different in Selenium)
+- Product image clicking targets wrong element - need to inspect modal HTML structure
+
+### Next Steps
+
+1. Inspect the modal HTML when products appear to find correct selectors
+2. Fix the click to target product cards in results
+3. Add "Add Product" button click after selecting product
+4. Test full flow with one ASIN before running all 32
+
+---
+
 ## Next Steps / Future Improvements
 
 - [ ] Add authentication for admin features
@@ -273,6 +351,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0dmh4ZGd
 - [ ] Add marketplace filtering (US, UK, DE, etc.)
 - [ ] Implement product detail pages
 - [ ] Add export to CSV/Excel functionality
+- [ ] **Complete Amazon List Creator automation**
 
 ---
 
@@ -282,4 +361,4 @@ For questions about this project, refer to the Claude conversation history or co
 
 ---
 
-*Last Updated: January 2026*
+*Last Updated: January 22, 2026*
