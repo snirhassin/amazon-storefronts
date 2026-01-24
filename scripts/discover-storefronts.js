@@ -20,10 +20,10 @@ const CONFIG = {
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseKey: process.env.SUPABASE_ANON_KEY,
 
-  // Search settings
-  searchesPerRun: 100,        // Number of Google searches per run
+  // Search settings (Developer Plan: 5,000/month = ~166/day)
+  searchesPerRun: 50,         // Run twice daily = 100 searches/day
   resultsPerSearch: 100,      // Max results per search (SerpAPI limit)
-  delayBetweenSearches: 2000, // ms between searches to avoid rate limits
+  delayBetweenSearches: 1000, // ms between searches
 
   // Search query variations to find more storefronts
   searchQueries: [
