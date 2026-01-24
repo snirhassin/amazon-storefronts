@@ -10,6 +10,10 @@
     "discover:bulk": "node src/discovery/bulk-discovery.js",
     "discover:lists": "node src/discovery/scrape-influencer-lists.js",
     "discover:500": "node src/discovery/bulk-discovery.js --target=500",
+    "discover:serpapi": "node scripts/discover-storefronts.js",
+    "discover:serpapi:dry": "node scripts/discover-storefronts.js --dry-run",
+    "process-queue": "node scripts/process-queue.js",
+    "process-queue:100": "node scripts/process-queue.js --limit 100",
     "scrape": "node src/index.js",
     "scrape:resume": "node src/index.js --resume",
     "scrape:test": "node src/index.js --test --limit=10",
@@ -29,6 +33,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.91.1",
+    "dotenv": "^16.6.1",
     "playwright": "^1.55.0"
   }
 }
