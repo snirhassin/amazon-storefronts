@@ -194,7 +194,22 @@ async function scrapeList(page, listUrl, storefrontId) {
       const asinMatches = document.body.innerHTML.match(/\/dp\/[A-Z0-9]{10}/g) || [];
       const uniqueAsins = [...new Set(asinMatches.map(m => m.replace('/dp/', '')))];
 
-      return { name, likes, products: uniqueAsins.length, storefront_id: storefrontId };
+      // Extract "updated X days/hours ago" text
+      const updatedMatch = document.body.innerText.match(/updated\s+(\d+)\s+(day|hour|week|month|minute)s?\s+ago/i);
+      let lastUpdated = null;
+      if (updatedMatch) {
+        const num = parseInt(updatedMatch[1]);
+        const unit = updatedMatch[2].toLowerCase();
+        const now = new Date();
+        if (unit === 'minute') now.setMinutes(now.getMinutes() - num);
+        else if (unit === 'hour') now.setHours(now.getHours() - num);
+        else if (unit === 'day') now.setDate(now.getDate() - num);
+        else if (unit === 'week') now.setDate(now.getDate() - (num * 7));
+        else if (unit === 'month') now.setMonth(now.getMonth() - num);
+        lastUpdated = now.toISOString();
+      }
+
+      return { name, likes, products: uniqueAsins.length, storefront_id: storefrontId, last_updated: lastUpdated };
     }, storefrontId);
 
     // Extract list ID from URL

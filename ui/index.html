@@ -886,7 +886,8 @@
                             <th data-sort="name">List Name <span class="sort-icon">↕</span></th>
                             <th data-sort="likes">Likes <span class="sort-icon">↕</span></th>
                             <th data-sort="products">Products <span class="sort-icon">↕</span></th>
-                            <th data-sort="lastScraped">Last Scraped <span class="sort-icon">↕</span></th>
+                            <th data-sort="lastUpdated">Updated <span class="sort-icon">↕</span></th>
+                            <th data-sort="lastScraped">Scraped <span class="sort-icon">↕</span></th>
                             <th>List URL</th>
                             <th>Actions</th>
                         </tr>
@@ -2915,6 +2916,11 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                     bVal = b.lastScraped ? new Date(b.lastScraped).getTime() : 0;
                 }
 
+                if (listSort.column === 'lastUpdated') {
+                    aVal = a.last_updated ? new Date(a.last_updated).getTime() : 0;
+                    bVal = b.last_updated ? new Date(b.last_updated).getTime() : 0;
+                }
+
                 if (aVal < bVal) return listSort.direction === 'asc' ? -1 : 1;
                 if (aVal > bVal) return listSort.direction === 'asc' ? 1 : -1;
                 return 0;
@@ -2927,7 +2933,7 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
             // Render
             const tbody = document.getElementById('listsBody');
             if (paginated.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No lists found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No lists found</td></tr>';
             } else {
                 tbody.innerHTML = paginated.map(l => {
                     // Check if list was uploaded to FB
@@ -2959,6 +2965,28 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                         }
                     }
 
+                    // Format last updated (from Amazon)
+                    let lastUpdatedDisplay = '-';
+                    if (l.last_updated) {
+                        const updatedDate = new Date(l.last_updated);
+                        const now = new Date();
+                        const diffMs = now - updatedDate;
+                        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                        if (diffHours < 1) {
+                            lastUpdatedDisplay = 'Just now';
+                        } else if (diffHours < 24) {
+                            lastUpdatedDisplay = diffHours + 'h ago';
+                        } else if (diffDays < 7) {
+                            lastUpdatedDisplay = diffDays + 'd ago';
+                        } else if (diffDays < 30) {
+                            lastUpdatedDisplay = Math.floor(diffDays / 7) + 'w ago';
+                        } else {
+                            lastUpdatedDisplay = updatedDate.toLocaleDateString();
+                        }
+                    }
+
                     return `
                     <tr>
                         <td class="checkbox-cell">
@@ -2968,6 +2996,7 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                         <td class="truncate" title="${l.name}">${l.name}${uploadedBadge}${newBadge}</td>
                         <td class="likes-count">${formatNumber(l.likes || 0)}</td>
                         <td>${l.products || 0}</td>
+                        <td style="font-size: 12px; color: #666;">${lastUpdatedDisplay}</td>
                         <td style="font-size: 12px; color: #666;">${lastScrapedDisplay}</td>
                         <td><a href="${l.url}" target="_blank" class="creator-link">Open</a></td>
                         <td style="white-space: nowrap;">
