@@ -26,8 +26,12 @@ CREATE TABLE IF NOT EXISTS lists (
     url TEXT,
     likes INTEGER DEFAULT 0,
     products INTEGER DEFAULT 0,
+    category TEXT DEFAULT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Migration: Add category column if it doesn't exist
+-- ALTER TABLE lists ADD COLUMN IF NOT EXISTS category TEXT DEFAULT NULL;
 
 -- Products table
 CREATE TABLE IF NOT EXISTS products (

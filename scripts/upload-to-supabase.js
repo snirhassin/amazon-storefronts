@@ -34,6 +34,39 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
 const DATA_DIR = path.join(__dirname, '../ui/data');
 
+// Category inference from list name
+const CATEGORY_KEYWORDS = {
+    'Home & Organization': ['home', 'house', 'organization', 'organize', 'storage', 'decor', 'furniture', 'living room', 'bedroom', 'bathroom', 'laundry', 'cleaning', 'apartment', 'farmhouse', 'cozy', 'interior'],
+    'Kitchen & Dining': ['kitchen', 'cooking', 'baking', 'food', 'meal prep', 'recipes', 'dining', 'coffee', 'tea', 'gadgets', 'cookware', 'appliances'],
+    'Beauty & Skincare': ['beauty', 'skincare', 'skin care', 'makeup', 'cosmetics', 'hair', 'nails', 'self care', 'glow', 'routine', 'spa'],
+    'Fashion & Accessories': ['fashion', 'style', 'outfit', 'clothes', 'clothing', 'dress', 'shoes', 'accessories', 'jewelry', 'bags', 'wardrobe', 'capsule', 'ootd', 'wear'],
+    'Travel & Outdoor': ['travel', 'vacation', 'trip', 'camping', 'hiking', 'outdoor', 'adventure', 'beach', 'packing', 'luggage', 'road trip'],
+    'Tech & Gadgets': ['tech', 'gadget', 'electronic', 'phone', 'computer', 'laptop', 'smart home', 'gaming', 'desk setup', 'wfh', 'work from home'],
+    'Baby & Kids': ['baby', 'kid', 'child', 'toddler', 'nursery', 'toy', 'mom', 'parent', 'newborn', 'maternity'],
+    'Health & Fitness': ['fitness', 'workout', 'gym', 'exercise', 'health', 'wellness', 'yoga', 'running', 'sports', 'protein', 'supplement', 'active'],
+    'Pets': ['pet', 'dog', 'cat', 'puppy', 'kitten', 'animal'],
+    'Entertainment': ['book', 'reading', 'movie', 'music', 'game', 'hobby', 'craft', 'art', 'diy'],
+    'Office & Work': ['office', 'work', 'desk', 'productivity', 'planner', 'stationery', 'business'],
+    'Holiday & Seasonal': ['christmas', 'holiday', 'halloween', 'easter', 'valentine', 'summer', 'winter', 'fall', 'spring', 'gift', 'bfcm', 'black friday']
+};
+
+function inferCategory(listName) {
+    if (!listName) return null;
+
+    const nameLower = listName.toLowerCase();
+
+    // Check each category's keywords
+    for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+        for (const keyword of keywords) {
+            if (nameLower.includes(keyword)) {
+                return category;
+            }
+        }
+    }
+
+    return null; // No match found
+}
+
 // Simple fetch-based Supabase client
 async function supabaseRequest(table, method, data = null, options = {}) {
     const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
@@ -143,13 +176,15 @@ async function uploadLists(validStorefrontIds) {
             seen.add(l.id);
             // Only include lists with valid storefront references
             if (validStorefrontIds.has(l.storefront)) {
+                const category = l.category || inferCategory(l.name);
                 rows.push({
                     id: l.id,
                     storefront_id: l.storefront,
                     name: l.name || '',
                     url: l.url || '',
                     likes: l.likes || 0,
-                    products: l.products || 0
+                    products: l.products || 0,
+                    category: category
                 });
             } else {
                 skipped++;

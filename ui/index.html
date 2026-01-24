@@ -862,6 +862,22 @@
                     <select id="storefrontFilter" style="padding: 8px 15px; border-radius: 8px; border: 1px solid #ddd;">
                         <option value="">All Storefronts</option>
                     </select>
+                    <select id="categoryFilter" style="padding: 8px 15px; border-radius: 8px; border: 1px solid #ddd;">
+                        <option value="">All Categories</option>
+                        <option value="Home & Organization">Home & Organization</option>
+                        <option value="Kitchen & Dining">Kitchen & Dining</option>
+                        <option value="Beauty & Skincare">Beauty & Skincare</option>
+                        <option value="Fashion & Accessories">Fashion & Accessories</option>
+                        <option value="Travel & Outdoor">Travel & Outdoor</option>
+                        <option value="Tech & Gadgets">Tech & Gadgets</option>
+                        <option value="Baby & Kids">Baby & Kids</option>
+                        <option value="Health & Fitness">Health & Fitness</option>
+                        <option value="Pets">Pets</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Office & Work">Office & Work</option>
+                        <option value="Holiday & Seasonal">Holiday & Seasonal</option>
+                        <option value="uncategorized">Uncategorized</option>
+                    </select>
                 </div>
                 <div class="btn-group">
                     <span id="selectedListsCount" class="selected-count" style="display: none;">0 selected</span>
@@ -886,6 +902,7 @@
                             <th class="checkbox-cell"><input type="checkbox" id="selectAllLists"></th>
                             <th data-sort="storefront">Storefront <span class="sort-icon">↕</span></th>
                             <th data-sort="name">List Name <span class="sort-icon">↕</span></th>
+                            <th data-sort="category">Category <span class="sort-icon">↕</span></th>
                             <th data-sort="likes">Likes <span class="sort-icon">↕</span></th>
                             <th data-sort="products">Products <span class="sort-icon">↕</span></th>
                             <th data-sort="lastUpdated">Updated <span class="sort-icon">↕</span></th>
@@ -895,7 +912,7 @@
                         </tr>
                     </thead>
                     <tbody id="listsBody">
-                        <tr><td colspan="8" class="loading"><div class="loading-spinner"></div>Loading lists...</td></tr>
+                        <tr><td colspan="10" class="loading"><div class="loading-spinner"></div>Loading lists...</td></tr>
                     </tbody>
                 </table>
                 <div class="pagination">
@@ -2682,7 +2699,8 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                 name: l.name,
                 url: l.url,
                 likes: l.likes,
-                products: l.products
+                products: l.products,
+                category: l.category
             }));
 
             // Load products
@@ -2784,6 +2802,9 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                 // Update stats from pre-calculated values
                 updateStats();
 
+                // Infer categories for lists that don't have one
+                inferListCategories();
+
                 // Populate filter dropdowns
                 populateStorefrontFilter();
                 populateProductFilters();
@@ -2814,6 +2835,43 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
             if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return num.toLocaleString();
+        }
+
+        // Category inference from list name
+        const CATEGORY_KEYWORDS = {
+            'Home & Organization': ['home', 'house', 'organization', 'organize', 'storage', 'decor', 'furniture', 'living room', 'bedroom', 'bathroom', 'laundry', 'cleaning', 'apartment', 'farmhouse', 'cozy', 'interior'],
+            'Kitchen & Dining': ['kitchen', 'cooking', 'baking', 'food', 'meal prep', 'recipes', 'dining', 'coffee', 'tea', 'gadgets', 'cookware', 'appliances'],
+            'Beauty & Skincare': ['beauty', 'skincare', 'skin care', 'makeup', 'cosmetics', 'hair', 'nails', 'self care', 'glow', 'routine', 'spa'],
+            'Fashion & Accessories': ['fashion', 'style', 'outfit', 'clothes', 'clothing', 'dress', 'shoes', 'accessories', 'jewelry', 'bags', 'wardrobe', 'capsule', 'ootd', 'wear'],
+            'Travel & Outdoor': ['travel', 'vacation', 'trip', 'camping', 'hiking', 'outdoor', 'adventure', 'beach', 'packing', 'luggage', 'road trip'],
+            'Tech & Gadgets': ['tech', 'gadget', 'electronic', 'phone', 'computer', 'laptop', 'smart home', 'gaming', 'desk setup', 'wfh', 'work from home'],
+            'Baby & Kids': ['baby', 'kid', 'child', 'toddler', 'nursery', 'toy', 'mom', 'parent', 'newborn', 'maternity'],
+            'Health & Fitness': ['fitness', 'workout', 'gym', 'exercise', 'health', 'wellness', 'yoga', 'running', 'sports', 'protein', 'supplement', 'active'],
+            'Pets': ['pet', 'dog', 'cat', 'puppy', 'kitten', 'animal'],
+            'Entertainment': ['book', 'reading', 'movie', 'music', 'game', 'hobby', 'craft', 'art', 'diy'],
+            'Office & Work': ['office', 'work', 'desk', 'productivity', 'planner', 'stationery', 'business'],
+            'Holiday & Seasonal': ['christmas', 'holiday', 'halloween', 'easter', 'valentine', 'summer', 'winter', 'fall', 'spring', 'gift', 'bfcm', 'black friday']
+        };
+
+        function inferCategory(listName) {
+            if (!listName) return null;
+            const nameLower = listName.toLowerCase();
+            for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+                for (const keyword of keywords) {
+                    if (nameLower.includes(keyword)) {
+                        return category;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function inferListCategories() {
+            lists.forEach(list => {
+                if (!list.category) {
+                    list.category = inferCategory(list.name);
+                }
+            });
         }
 
         // Render storefronts table
@@ -2953,6 +3011,16 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                 filtered = filtered.filter(l => l.storefront === storefrontFilter);
             }
 
+            // Apply category filter
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            if (categoryFilter) {
+                if (categoryFilter === 'uncategorized') {
+                    filtered = filtered.filter(l => !l.category);
+                } else {
+                    filtered = filtered.filter(l => l.category === categoryFilter);
+                }
+            }
+
             // Sort
             filtered.sort((a, b) => {
                 let aVal = a[listSort.column];
@@ -2985,7 +3053,7 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
             // Render
             const tbody = document.getElementById('listsBody');
             if (paginated.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No lists found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No lists found</td></tr>';
             } else {
                 tbody.innerHTML = paginated.map(l => {
                     // Check if list was uploaded to FB
@@ -3046,6 +3114,7 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                         </td>
                         <td><a href="https://www.amazon.com/shop/${l.storefront}" target="_blank" class="creator-link">${l.storefront}</a></td>
                         <td class="truncate" title="${l.name}">${l.name}${uploadedBadge}${newBadge}</td>
+                        <td style="font-size: 12px;"><span style="background: ${l.category ? '#e8f4f8' : '#f5f5f5'}; color: ${l.category ? '#0066cc' : '#999'}; padding: 2px 8px; border-radius: 12px; font-size: 11px;">${l.category || '-'}</span></td>
                         <td class="likes-count">${formatNumber(l.likes || 0)}</td>
                         <td>${l.products || 0}</td>
                         <td style="font-size: 12px; color: #666;">${lastUpdatedDisplay}</td>
@@ -3260,6 +3329,12 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
 
             // Storefront filter
             document.getElementById('storefrontFilter').addEventListener('change', () => {
+                currentListPage = 1;
+                renderLists();
+            });
+
+            // Category filter
+            document.getElementById('categoryFilter').addEventListener('change', () => {
                 currentListPage = 1;
                 renderLists();
             });
