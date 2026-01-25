@@ -1,5 +1,7 @@
 {
   "public": true,
+  "buildCommand": "node scripts/inject-secrets.js",
+  "outputDirectory": ".",
   "rewrites": [
     { "source": "/", "destination": "/ui/index.html" },
     { "source": "/import", "destination": "/ui/import.html" }
