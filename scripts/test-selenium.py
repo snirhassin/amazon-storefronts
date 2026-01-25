@@ -80,23 +80,6 @@ except Exception as e:
     print(">>> Click 'Browse History' tab manually, then press Enter <<<")
     input()
 
-# Verify search box exists
-print("Looking for search box...")
-test_search = find_search_box()
-if test_search:
-    print(f"  Found search box: {test_search.get_attribute('placeholder') or test_search.get_attribute('aria-label')}")
-else:
-    print("  Search box NOT found. Listing all inputs:")
-    inputs = driver.find_elements(By.TAG_NAME, "input")
-    for i, inp in enumerate(inputs):
-        try:
-            if inp.is_displayed():
-                print(f"    [{i}] placeholder='{inp.get_attribute('placeholder')}' aria='{inp.get_attribute('aria-label')}'")
-        except:
-            pass
-    print(">>> Make sure the modal is open with Browse History tab selected, then press Enter <<<")
-    input()
-
 def find_search_box():
     """Find the search box using multiple selectors"""
     selectors = [
@@ -188,6 +171,23 @@ def add_asin(asin):
     except Exception as e:
         print(f"  Error: {e}")
         return False
+
+# Verify search box exists before starting
+print("Looking for search box...")
+test_search = find_search_box()
+if test_search:
+    print(f"  Found search box: {test_search.get_attribute('placeholder') or test_search.get_attribute('aria-label')}")
+else:
+    print("  Search box NOT found. Listing all inputs:")
+    inputs = driver.find_elements(By.TAG_NAME, "input")
+    for i, inp in enumerate(inputs):
+        try:
+            if inp.is_displayed():
+                print(f"    [{i}] placeholder='{inp.get_attribute('placeholder')}' aria='{inp.get_attribute('aria-label')}'")
+        except:
+            pass
+    print(">>> Make sure the modal is open with Browse History tab selected, then press Enter <<<")
+    input()
 
 print(f"\nAdding {len(ASINS)} products...")
 success = 0

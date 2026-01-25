@@ -4,6 +4,7 @@
   "description": "Discover and scrape Amazon Creator Storefronts at scale - profiles, lists, likes, and products",
   "main": "src/index.js",
   "scripts": {
+    "build": "node scripts/inject-secrets.js",
     "discover": "node src/discovery/index.js",
     "discover:google": "node src/discovery/google-discovery.js",
     "discover:amazon": "node src/discovery/founditonamazon.js",

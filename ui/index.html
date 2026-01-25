@@ -4488,6 +4488,12 @@ Key elements:
                 imagePromptHistory.push({ type: 'initial', prompt: prompt });
             }
 
+            // Check for Gemini API key early
+            if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === 'your-gemini-api-key-here') {
+                alert('Gemini API key not configured.\n\nTo fix this:\n1. Copy ui/secrets.example.js to ui/secrets.js\n2. Add your Gemini API key from https://aistudio.google.com/app/apikey\n3. Refresh the page');
+                return;
+            }
+
             // Reset abort flag and show loading state
             imageGenerationAborted = false;
             const btn = document.getElementById('generateImagesBtn');
@@ -4591,9 +4597,56 @@ Key elements:
 
         // Helper: Fetch image URL and convert to base64
         async function fetchImageAsBase64(url) {
+            // Method 1: Try using canvas with crossOrigin (works if server allows CORS)
             try {
-                // Use a proxy or direct fetch depending on CORS
-                const response = await fetch(url);
+                const result = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.naturalWidth;
+                            canvas.height = img.naturalHeight;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                            resolve(dataUrl.split(',')[1]);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    };
+                    img.onerror = () => reject(new Error('Image load failed'));
+                    // Add timestamp to bypass cache and retry with CORS
+                    img.src = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+                });
+                if (result) return result;
+            } catch (e) {
+                console.log('Canvas method failed for:', url, '- trying CORS proxy...');
+            }
+
+            // Method 2: Try using a CORS proxy
+            try {
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                const response = await fetch(proxyUrl);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const base64 = reader.result.split(',')[1];
+                            resolve(base64);
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                }
+            } catch (e) {
+                console.log('CORS proxy failed for:', url);
+            }
+
+            // Method 3: Direct fetch as last resort (unlikely to work for cross-origin)
+            try {
+                const response = await fetch(url, { mode: 'cors' });
                 const blob = await response.blob();
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -4605,7 +4658,7 @@ Key elements:
                     reader.readAsDataURL(blob);
                 });
             } catch (e) {
-                console.error('Failed to fetch image:', url, e);
+                console.warn('All methods failed to fetch image:', url);
                 return null;
             }
         }
@@ -5536,9 +5589,28 @@ List: {{list_name}}{{list_description_section}}`
 
         // Login to Facebook
         function loginToFacebook() {
+            // Check if FB App ID is configured
+            if (!window.FB_APP_ID || window.FB_APP_ID === 'your-fb-app-id') {
+                alert('Facebook App ID not configured.\n\nTo fix this:\n1. Copy ui/secrets.example.js to ui/secrets.js\n2. Add your Facebook App ID from https://developers.facebook.com\n3. Refresh the page\n\nNote: For Vercel deployment, the secrets.js file must be deployed with your credentials.');
+                return;
+            }
+
             if (!fbInitialized) {
                 initFacebookSDK();
-                setTimeout(loginToFacebook, 1000);
+                // Wait for SDK to initialize with a max retry count
+                let retries = 0;
+                const maxRetries = 10;
+                const waitForInit = () => {
+                    retries++;
+                    if (fbInitialized) {
+                        loginToFacebook();
+                    } else if (retries < maxRetries) {
+                        setTimeout(waitForInit, 500);
+                    } else {
+                        alert('Facebook SDK failed to initialize. Please check your internet connection and try again.');
+                    }
+                };
+                setTimeout(waitForInit, 500);
                 return;
             }
 
