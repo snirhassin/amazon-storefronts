@@ -449,10 +449,16 @@ ASINS = [
 - **Bulk Update Selected**: Select multiple lists and update all at once
 - **Scraper Server API**: `/scrape-list` endpoint for programmatic access
 
+### Data Loading Fix
+- **Pagination for Large Datasets**: Fixed Supabase 1000-row limit by loading all lists using paginated requests
+- Now loads all 10,875+ lists instead of just the top 1000
+- Fixes "View Lists" showing empty for storefronts with low-engagement lists
+
 ### New Scripts
 - `scripts/scraper-server.js` - API server with `/scrape-list` endpoint
 - `scripts/scrape-list-products.js` - Standalone CLI tool for scraping list products
 - `scripts/test-export-feature.js` - Playwright tests for UI features
+- `scripts/test-view-lists.js` - Test for View Lists functionality
 
 ### Testing
 - Automated Playwright tests verify:
@@ -461,6 +467,8 @@ ASINS = [
   - Export Excel functionality
   - Products link navigation
   - CSV file structure validation
+  - Bulk update button visibility
+  - View Lists for all storefronts (including low-engagement)
 
 ---
 
