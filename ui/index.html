@@ -2690,15 +2690,26 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                 marketplace: s.marketplace
             }));
 
-            // Load lists (increase limit beyond Supabase default of 1000)
-            const { data: listsData, error: listsError } = await supabaseClient
-                .from('lists')
-                .select('*')
-                .order('likes', { ascending: false })
-                .limit(10000);
+            // Load ALL lists using pagination (Supabase has 1000 row limit per request)
+            let allListsData = [];
+            let page = 0;
+            const pageSize = 1000;
+            while (true) {
+                const { data: pageData, error: pageError } = await supabaseClient
+                    .from('lists')
+                    .select('*')
+                    .order('likes', { ascending: false })
+                    .range(page * pageSize, (page + 1) * pageSize - 1);
 
-            if (listsError) throw listsError;
-            lists = listsData.map(l => ({
+                if (pageError) throw pageError;
+                if (!pageData || pageData.length === 0) break;
+
+                allListsData = allListsData.concat(pageData);
+                if (pageData.length < pageSize) break; // Last page
+                page++;
+            }
+
+            lists = allListsData.map(l => ({
                 id: l.id,
                 storefront: l.storefront_id,
                 name: l.name,
