@@ -172,6 +172,38 @@ async function runTest() {
             console.log('  ⚠️ Skipped - no CSV file to verify');
         }
 
+        // Test 6: Click products count link to view filtered products
+        console.log('Test 6: Testing products link navigation...');
+
+        // Go back to Lists tab
+        await page.locator('.nav-tab[data-tab="lists"]').click();
+        await page.waitForTimeout(500);
+        await searchInput.fill('abeautifulmess');
+        await page.waitForTimeout(500);
+
+        // Click on the products count link in the Home Decor row
+        const productsLink = await homeDecorRow.locator('a.creator-link').nth(1); // Second link is products count
+        await productsLink.click();
+        await page.waitForTimeout(1000);
+
+        // Verify we're on Products tab and filtered
+        const productsTabActive = await page.locator('.nav-tab[data-tab="products"].active').isVisible();
+        const listFilterValue = await page.locator('#productListFilter').inputValue();
+
+        if (productsTabActive && listFilterValue) {
+            console.log('  ✅ Products link navigates to filtered Products tab');
+            console.log(`     - List filter set to: ${listFilterValue}`);
+            testsPassed++;
+        } else {
+            console.log('  ❌ Products link navigation failed');
+            console.log(`     Tab active: ${productsTabActive}, Filter value: ${listFilterValue}`);
+            testsFailed++;
+        }
+
+        // Take final screenshot
+        await page.screenshot({ path: path.join(DOWNLOAD_DIR, 'products-filtered.png') });
+        console.log('  📸 Screenshot saved to test-downloads/products-filtered.png');
+
     } catch (error) {
         console.log('❌ Test error:', error.message);
         await page.screenshot({ path: path.join(DOWNLOAD_DIR, 'test-error.png') });
