@@ -204,6 +204,36 @@ async function runTest() {
         await page.screenshot({ path: path.join(DOWNLOAD_DIR, 'products-filtered.png') });
         console.log('  📸 Screenshot saved to test-downloads/products-filtered.png');
 
+        // Test 7: Verify bulk update button appears when lists are selected
+        console.log('Test 7: Testing bulk update button visibility...');
+
+        // Go back to Lists tab
+        await page.locator('.nav-tab[data-tab="lists"]').click();
+        await page.waitForTimeout(500);
+
+        // Select the Home Decor list checkbox
+        const checkbox = await homeDecorRow.locator('input[type="checkbox"]');
+        await checkbox.check();
+        await page.waitForTimeout(300);
+
+        // Check if Update Selected button is visible
+        const updateSelectedBtn = await page.locator('#updateSelectedBtn').isVisible();
+        const selectedCount = await page.locator('#selectedListsCount').textContent();
+
+        if (updateSelectedBtn && selectedCount.includes('1 selected')) {
+            console.log('  ✅ Bulk update button appears when lists are selected');
+            console.log(`     - Selected count shows: ${selectedCount}`);
+            testsPassed++;
+        } else {
+            console.log('  ❌ Bulk update button not visible or count incorrect');
+            console.log(`     Button visible: ${updateSelectedBtn}, Count: ${selectedCount}`);
+            testsFailed++;
+        }
+
+        // Take screenshot of selection
+        await page.screenshot({ path: path.join(DOWNLOAD_DIR, 'bulk-selection.png') });
+        console.log('  📸 Screenshot saved to test-downloads/bulk-selection.png');
+
     } catch (error) {
         console.log('❌ Test error:', error.message);
         await page.screenshot({ path: path.join(DOWNLOAD_DIR, 'test-error.png') });
