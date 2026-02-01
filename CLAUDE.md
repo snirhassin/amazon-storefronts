@@ -110,12 +110,37 @@ ALTER TABLE stats DISABLE ROW LEVEL SECURITY;
 
 ## UI Features
 
+### Authentication
+
+- **Login**: `snir` / `snir`
+- Session stored in sessionStorage
+
 ### Tabs
 
 1. **Storefronts** - Browse all creators with search, filters, sorting
 2. **Lists** - View all product lists with engagement metrics
 3. **Products** - Browse individual products with ASIN lookup
 4. **Campaigns** - Create Facebook ad campaigns from lists
+
+### Lists Tab Features
+
+| Feature | Description |
+|---------|-------------|
+| **🔄 Update Button** | Scrapes products for a single list (requires scraper server) |
+| **📥 Excel Button** | Downloads list products as CSV (ASIN, Title, URL) |
+| **Products Count Link** | Click to view filtered products in Products tab |
+| **Checkbox Selection** | Select multiple lists for bulk operations |
+| **🔄 Update Selected** | Bulk scrape products for all selected lists |
+| **Export Selected** | Export selected lists data to CSV |
+
+### Products Tab Features
+
+| Feature | Description |
+|---------|-------------|
+| **Storefront Filter** | Filter by creator storefront |
+| **List Filter** | Filter by specific list |
+| **Search** | Search by ASIN or title |
+| **Export All** | Export filtered products to CSV/TXT/JSON |
 
 ### Campaigns Workflow
 
@@ -139,7 +164,12 @@ amazon-storefronts/
 │       ├── lists.json         # JSON fallback
 │       └── products.json      # JSON fallback
 ├── scripts/
-│   └── upload-to-supabase.js  # Data migration script
+│   ├── scraper-server.js      # API server for UI scraping
+│   ├── scrape-list-products.js # Standalone list product scraper
+│   ├── process-queue-playwright.js # Bulk storefront scraper
+│   ├── discover-storefronts.js # Storefront discovery
+│   ├── upload-to-supabase.js  # Data migration script
+│   └── test-export-feature.js # Playwright tests for UI
 ├── data/
 │   └── output/             # Scraper CSV output
 ├── src/                    # Scraper source code
@@ -173,6 +203,59 @@ SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     { "source": "/import", "destination": "/ui/import.html" }
   ]
 }
+```
+
+---
+
+## Scraper Server API
+
+The scraper server provides API endpoints for the UI to scrape data from Amazon.
+
+### Starting the Server
+
+```bash
+cd amazon-storefronts
+node scripts/scraper-server.js
+```
+
+Server runs on `http://localhost:3001`
+
+### API Endpoints
+
+| Method | Endpoint | Description | Body |
+|--------|----------|-------------|------|
+| GET | `/status` | Get current scraping status | - |
+| POST | `/start` | Start bulk discovery + scraping | `{ searches: 50 }` |
+| POST | `/stop` | Stop current scraping | - |
+| POST | `/scrape-list` | Scrape products for a single list | `{ listId: "XXXXX" }` |
+
+### Example: Scrape a Single List
+
+```bash
+curl -X POST http://localhost:3001/scrape-list \
+  -H "Content-Type: application/json" \
+  -d '{"listId": "11HA0TWNNSRX1"}'
+```
+
+Response:
+```json
+{
+  "success": true,
+  "listName": "Home Decor",
+  "productsScraped": 78
+}
+```
+
+### Standalone List Scraper
+
+For manual/CLI usage without the server:
+
+```bash
+# By list ID
+node scripts/scrape-list-products.js 11HA0TWNNSRX1
+
+# By URL
+node scripts/scrape-list-products.js "https://www.amazon.com/shop/abeautifulmess/list/11HA0TWNNSRX1"
 ```
 
 ---
@@ -344,14 +427,40 @@ ASINS = [
 
 ## Next Steps / Future Improvements
 
+- [x] ~~Add export to CSV/Excel functionality~~ ✅ (Feb 2026)
+- [x] ~~Add product scraping per list~~ ✅ (Feb 2026)
+- [x] ~~Add bulk update for selected lists~~ ✅ (Feb 2026)
 - [ ] Add authentication for admin features
 - [ ] Implement actual Facebook Ads API integration
 - [ ] Add real AI image generation (currently mock)
 - [ ] Create import.html for CSV upload via UI
 - [ ] Add marketplace filtering (US, UK, DE, etc.)
 - [ ] Implement product detail pages
-- [ ] Add export to CSV/Excel functionality
 - [ ] **Complete Amazon List Creator automation**
+
+---
+
+## Recent Changes (February 2026)
+
+### Product Scraping & Export
+- **Export List Products**: 📥 Excel button on each list downloads CSV with ASIN, Title, URL
+- **Products Count Link**: Click products count in Lists tab to view filtered products
+- **Single List Update**: 🔄 button scrapes products from Amazon for individual lists
+- **Bulk Update Selected**: Select multiple lists and update all at once
+- **Scraper Server API**: `/scrape-list` endpoint for programmatic access
+
+### New Scripts
+- `scripts/scraper-server.js` - API server with `/scrape-list` endpoint
+- `scripts/scrape-list-products.js` - Standalone CLI tool for scraping list products
+- `scripts/test-export-feature.js` - Playwright tests for UI features
+
+### Testing
+- Automated Playwright tests verify:
+  - Login flow
+  - Lists tab navigation
+  - Export Excel functionality
+  - Products link navigation
+  - CSV file structure validation
 
 ---
 
@@ -361,4 +470,4 @@ For questions about this project, refer to the Claude conversation history or co
 
 ---
 
-*Last Updated: January 22, 2026*
+*Last Updated: February 1, 2026*

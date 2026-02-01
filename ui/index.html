@@ -881,6 +881,9 @@
                 </div>
                 <div class="btn-group">
                     <span id="selectedListsCount" class="selected-count" style="display: none;">0 selected</span>
+                    <button class="btn btn-secondary" onclick="updateSelectedLists()" id="updateSelectedBtn" style="display: none;">
+                        🔄 Update Selected
+                    </button>
                     <button class="btn btn-primary" onclick="exportSelectedLists()" id="exportSelectedBtn" style="display: none;">
                         Export Selected
                     </button>
@@ -3484,14 +3487,17 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
         function updateSelectedCount() {
             const countEl = document.getElementById('selectedListsCount');
             const exportBtn = document.getElementById('exportSelectedBtn');
+            const updateBtn = document.getElementById('updateSelectedBtn');
 
             if (selectedLists.size > 0) {
                 countEl.textContent = `${selectedLists.size} selected`;
                 countEl.style.display = 'inline';
                 exportBtn.style.display = 'flex';
+                updateBtn.style.display = 'flex';
             } else {
                 countEl.style.display = 'none';
                 exportBtn.style.display = 'none';
+                updateBtn.style.display = 'none';
             }
         }
 
@@ -4022,6 +4028,125 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
         function exportSelectedLists() {
             const selected = lists.filter(l => selectedLists.has(l.id));
             downloadCSV(selected, 'selected-lists-export.csv');
+        }
+
+        // Bulk update products for selected lists
+        async function updateSelectedLists() {
+            const selectedIds = Array.from(selectedLists);
+            if (selectedIds.length === 0) return;
+
+            const SCRAPER_URL = 'http://localhost:3001';
+            const updateBtn = document.getElementById('updateSelectedBtn');
+            const originalText = updateBtn.innerHTML;
+
+            // Show progress
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = `<span class="loading-spinner" style="width: 14px; height: 14px; border-width: 2px; margin-right: 8px;"></span> Updating 0/${selectedIds.length}...`;
+
+            let successCount = 0;
+            let failedCount = 0;
+            let totalProducts = 0;
+            const results = [];
+
+            for (let i = 0; i < selectedIds.length; i++) {
+                const listId = selectedIds[i];
+                const list = lists.find(l => l.id === listId);
+
+                // Update progress
+                updateBtn.innerHTML = `<span class="loading-spinner" style="width: 14px; height: 14px; border-width: 2px; margin-right: 8px;"></span> Updating ${i + 1}/${selectedIds.length}...`;
+
+                try {
+                    const response = await fetch(`${SCRAPER_URL}/scrape-list`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ listId })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        successCount++;
+                        totalProducts += result.productsScraped;
+                        results.push({ name: list?.name || listId, status: 'success', products: result.productsScraped });
+
+                        // Update local list data
+                        if (list) {
+                            list.products = result.productsScraped;
+                            list.lastScraped = new Date().toISOString();
+                        }
+                    } else {
+                        failedCount++;
+                        results.push({ name: list?.name || listId, status: 'failed', error: result.error });
+                    }
+                } catch (err) {
+                    if (i === 0 && err.message.includes('fetch')) {
+                        // Server not running
+                        alert('Scraper server not running. Start it with:\nnode scripts/scraper-server.js');
+                        updateBtn.disabled = false;
+                        updateBtn.innerHTML = originalText;
+                        return;
+                    }
+                    failedCount++;
+                    results.push({ name: list?.name || listId, status: 'failed', error: err.message });
+                }
+
+                // Small delay between requests to avoid overwhelming the server
+                if (i < selectedIds.length - 1) {
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            }
+
+            // Reload products from database
+            try {
+                const { data: newProducts } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .order('position', { ascending: true });
+
+                if (newProducts) {
+                    products = newProducts.map(p => ({
+                        asin: p.asin,
+                        title: p.title,
+                        url: p.url,
+                        price: p.price,
+                        currency: p.currency,
+                        image: p.image,
+                        listId: p.list_id,
+                        storefront: p.storefront_id,
+                        position: p.position
+                    }));
+                }
+            } catch (err) {
+                console.error('Error reloading products:', err);
+            }
+
+            // Reset button and refresh
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalText;
+            renderLists();
+            renderProducts();
+
+            // Show summary
+            let summary = `Bulk Update Complete!\n\n`;
+            summary += `✅ Success: ${successCount} lists (${totalProducts} products)\n`;
+            if (failedCount > 0) {
+                summary += `❌ Failed: ${failedCount} lists\n`;
+            }
+            summary += `\nDetails:\n`;
+            results.forEach(r => {
+                if (r.status === 'success') {
+                    summary += `  ✅ ${r.name}: ${r.products} products\n`;
+                } else {
+                    summary += `  ❌ ${r.name}: ${r.error}\n`;
+                }
+            });
+
+            alert(summary);
+
+            // Clear selection
+            selectedLists.clear();
+            updateSelectedCount();
+            renderLists();
         }
 
         function exportModalLists() {
