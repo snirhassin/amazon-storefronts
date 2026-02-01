@@ -3124,8 +3124,8 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                             <button class="btn" style="padding: 5px 8px; font-size: 12px; background: #f0f0f0; border: 1px solid #ddd;" onclick="updateSingleList('${l.id}')" title="Update list data">
                                 🔄
                             </button>
-                            <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="addToExport('${l.id}')">
-                                Export
+                            <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="exportListProducts('${l.id}')" title="Download products as CSV">
+                                📥 Excel
                             </button>
                             <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="openDraft('${l.id}', '${l.storefront}')">
                                 Duplicate
@@ -4023,6 +4023,28 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
             selectedLists.add(listId);
             updateSelectedCount();
             renderLists();
+        }
+
+        // Export list products to Excel/CSV
+        function exportListProducts(listId) {
+            const list = lists.find(l => l.id === listId);
+            const listProducts = products.filter(p => p.listId === listId);
+
+            if (listProducts.length === 0) {
+                alert('No products found for this list. The list may not have been scraped yet.');
+                return;
+            }
+
+            // Create export data with ASIN, Title, URL
+            const exportData = listProducts.map(p => ({
+                ASIN: p.asin,
+                Title: p.title || '',
+                URL: p.url || `https://www.amazon.com/dp/${p.asin}`
+            }));
+
+            // Generate filename from list name
+            const safeName = (list?.name || 'list').replace(/[^a-zA-Z0-9]/g, '-').substring(0, 50);
+            downloadCSV(exportData, `${safeName}-products.csv`);
         }
 
         // Download helpers
