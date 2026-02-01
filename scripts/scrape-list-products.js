@@ -56,6 +56,16 @@ async function scrapeListProducts(listUrl) {
     const products = await page.evaluate(() => {
       const items = [];
 
+      // Bad titles to filter out
+      const badTitles = ['Skip to', 'Product Detail Page Link', 'Skip to main content', 'null', 'undefined', '', 'Details Page'];
+
+      // Helper to check if title is valid
+      const isValidTitle = (t) => {
+        if (!t || t.length < 5) return false;
+        const lower = t.toLowerCase();
+        return !badTitles.some(bad => lower.startsWith(bad.toLowerCase()));
+      };
+
       // Method 1: Look for product cards with ASIN links
       const productLinks = document.querySelectorAll('a[href*="/dp/"]');
       const seenAsins = new Set();
@@ -73,12 +83,12 @@ async function scrapeListProducts(listUrl) {
         let title = '';
 
         // Check if link has title attribute
-        if (link.title) {
+        if (link.title && isValidTitle(link.title)) {
           title = link.title;
         }
 
         // Check for aria-label
-        if (!title && link.getAttribute('aria-label')) {
+        if (!title && link.getAttribute('aria-label') && isValidTitle(link.getAttribute('aria-label'))) {
           title = link.getAttribute('aria-label');
         }
 
@@ -90,15 +100,15 @@ async function scrapeListProducts(listUrl) {
             const h3 = parent.querySelector('h3');
             const span = parent.querySelector('span[class*="title"], span[class*="name"]');
 
-            if (h2?.textContent?.trim()) {
+            if (h2?.textContent?.trim() && isValidTitle(h2.textContent.trim())) {
               title = h2.textContent.trim();
               break;
             }
-            if (h3?.textContent?.trim()) {
+            if (h3?.textContent?.trim() && isValidTitle(h3.textContent.trim())) {
               title = h3.textContent.trim();
               break;
             }
-            if (span?.textContent?.trim() && span.textContent.length > 10) {
+            if (span?.textContent?.trim() && span.textContent.length > 10 && isValidTitle(span.textContent.trim())) {
               title = span.textContent.trim();
               break;
             }

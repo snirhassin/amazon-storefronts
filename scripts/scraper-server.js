@@ -64,6 +64,13 @@ async function scrapeListProducts(listId) {
       const productLinks = document.querySelectorAll('a[href*="/dp/"]');
       const seenAsins = new Set();
 
+      // Bad titles to filter out
+      const badTitles = ['Skip to', 'Product Detail Page Link', 'Skip to main content'];
+      const isValidTitle = (t) => {
+        if (!t || t.length < 5) return false;
+        return !badTitles.some(bad => t.toLowerCase().startsWith(bad.toLowerCase()));
+      };
+
       productLinks.forEach(link => {
         const asinMatch = link.href.match(/\/dp\/([A-Z0-9]{10})/);
         if (!asinMatch) return;
@@ -72,14 +79,18 @@ async function scrapeListProducts(listId) {
         if (seenAsins.has(asin)) return;
         seenAsins.add(asin);
 
-        let title = link.title || link.getAttribute('aria-label') || '';
+        let title = '';
+        if (link.title && isValidTitle(link.title)) title = link.title;
+        if (!title && link.getAttribute('aria-label') && isValidTitle(link.getAttribute('aria-label'))) {
+          title = link.getAttribute('aria-label');
+        }
         if (!title) {
           let parent = link.parentElement;
           for (let i = 0; i < 5 && parent; i++) {
             const h2 = parent.querySelector('h2');
             const h3 = parent.querySelector('h3');
-            if (h2?.textContent?.trim()) { title = h2.textContent.trim(); break; }
-            if (h3?.textContent?.trim()) { title = h3.textContent.trim(); break; }
+            if (h2?.textContent?.trim() && isValidTitle(h2.textContent.trim())) { title = h2.textContent.trim(); break; }
+            if (h3?.textContent?.trim() && isValidTitle(h3.textContent.trim())) { title = h3.textContent.trim(); break; }
             parent = parent.parentElement;
           }
         }
