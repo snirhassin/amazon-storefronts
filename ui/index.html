@@ -2672,7 +2672,8 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
             const { data: storefrontsData, error: storefrontsError } = await supabaseClient
                 .from('storefronts')
                 .select('*')
-                .order('total_list_likes', { ascending: false });
+                .order('total_list_likes', { ascending: false })
+                .limit(5000);
 
             if (storefrontsError) throw storefrontsError;
             storefronts = storefrontsData.map(s => ({
@@ -2689,11 +2690,12 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
                 marketplace: s.marketplace
             }));
 
-            // Load lists
+            // Load lists (increase limit beyond Supabase default of 1000)
             const { data: listsData, error: listsError } = await supabaseClient
                 .from('lists')
                 .select('*')
-                .order('likes', { ascending: false });
+                .order('likes', { ascending: false })
+                .limit(10000);
 
             if (listsError) throw listsError;
             lists = listsData.map(l => ({
@@ -2710,7 +2712,8 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
             const { data: productsData, error: productsError } = await supabaseClient
                 .from('products')
                 .select('*')
-                .order('position', { ascending: true });
+                .order('position', { ascending: true })
+                .limit(50000);
 
             if (productsError) throw productsError;
             products = productsData.map(p => ({
