@@ -13,9 +13,121 @@ require('dotenv').config();
 const http = require('http');
 const { spawn } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
+const { chromium } = require('playwright');
 
 const PORT = process.env.SCRAPER_PORT || 3001;
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+
+/**
+ * Scrape products from a single list
+ */
+async function scrapeListProducts(listId) {
+  // Get list from database
+  const { data: list, error } = await supabase
+    .from('lists')
+    .select('*')
+    .eq('id', listId)
+    .single();
+
+  if (error || !list) {
+    return { error: 'List not found' };
+  }
+
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--disable-blink-features=AutomationControlled'],
+  });
+
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    viewport: { width: 1920, height: 1080 },
+  });
+
+  const page = await context.newPage();
+
+  try {
+    await page.goto(list.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(2000);
+
+    // Scroll to load more
+    await page.evaluate(async () => {
+      for (let i = 0; i < 5; i++) {
+        window.scrollBy(0, 1000);
+        await new Promise(r => setTimeout(r, 500));
+      }
+    });
+    await page.waitForTimeout(1000);
+
+    // Extract products
+    const products = await page.evaluate(() => {
+      const items = [];
+      const productLinks = document.querySelectorAll('a[href*="/dp/"]');
+      const seenAsins = new Set();
+
+      productLinks.forEach(link => {
+        const asinMatch = link.href.match(/\/dp\/([A-Z0-9]{10})/);
+        if (!asinMatch) return;
+
+        const asin = asinMatch[1];
+        if (seenAsins.has(asin)) return;
+        seenAsins.add(asin);
+
+        let title = link.title || link.getAttribute('aria-label') || '';
+        if (!title) {
+          let parent = link.parentElement;
+          for (let i = 0; i < 5 && parent; i++) {
+            const h2 = parent.querySelector('h2');
+            const h3 = parent.querySelector('h3');
+            if (h2?.textContent?.trim()) { title = h2.textContent.trim(); break; }
+            if (h3?.textContent?.trim()) { title = h3.textContent.trim(); break; }
+            parent = parent.parentElement;
+          }
+        }
+
+        let image = '';
+        const img = link.querySelector('img') || link.parentElement?.querySelector('img');
+        if (img?.src && !img.src.includes('pixel')) image = img.src;
+
+        items.push({ asin, title: title || '', url: `https://www.amazon.com/dp/${asin}`, image });
+      });
+
+      return items;
+    });
+
+    await browser.close();
+
+    if (products.length === 0) {
+      return { error: 'No products found', listName: list.name };
+    }
+
+    // Delete old products and insert new
+    await supabase.from('products').delete().eq('list_id', listId);
+
+    const toInsert = products.map((p, i) => ({
+      asin: p.asin,
+      title: p.title,
+      url: p.url,
+      image: p.image,
+      list_id: listId,
+      storefront_id: list.storefront_id,
+      position: i + 1,
+    }));
+
+    await supabase.from('products').insert(toInsert);
+
+    // Update list
+    await supabase
+      .from('lists')
+      .update({ products: products.length, last_scraped: new Date().toISOString() })
+      .eq('id', listId);
+
+    return { success: true, listName: list.name, productsScraped: products.length };
+
+  } catch (err) {
+    await browser.close();
+    return { error: err.message };
+  }
+}
 
 let currentProcess = null;
 let logs = [];
@@ -230,6 +342,21 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(result.error ? 400 : 200);
       res.end(JSON.stringify(result));
     }
+    else if (req.method === 'POST' && url.pathname === '/scrape-list') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', async () => {
+        const params = body ? JSON.parse(body) : {};
+        if (!params.listId) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'listId required' }));
+          return;
+        }
+        const result = await scrapeListProducts(params.listId);
+        res.writeHead(result.error ? 400 : 200);
+        res.end(JSON.stringify(result));
+      });
+    }
     else {
       res.writeHead(404);
       res.end(JSON.stringify({ error: 'Not found' }));
@@ -244,7 +371,8 @@ server.listen(PORT, () => {
   console.log(`🚀 Scraper Control Server running on http://localhost:${PORT}`);
   console.log('');
   console.log('Endpoints:');
-  console.log(`  GET  http://localhost:${PORT}/status  - Get scraping status`);
-  console.log(`  POST http://localhost:${PORT}/start   - Start scraping`);
-  console.log(`  POST http://localhost:${PORT}/stop    - Stop scraping`);
+  console.log(`  GET  http://localhost:${PORT}/status       - Get scraping status`);
+  console.log(`  POST http://localhost:${PORT}/start        - Start scraping`);
+  console.log(`  POST http://localhost:${PORT}/stop         - Stop scraping`);
+  console.log(`  POST http://localhost:${PORT}/scrape-list  - Scrape single list { listId }`);
 });

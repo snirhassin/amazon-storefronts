@@ -3946,50 +3946,61 @@ https://www.amazon.com/shop/username3" style="width: 100%; height: 200px; paddin
             }
 
             try {
-                // Simulate API call to scrape list data
-                await new Promise(r => setTimeout(r, 1000));
+                // Try to call scraper server API (runs on localhost:3001)
+                const SCRAPER_URL = 'http://localhost:3001';
+                let scraped = false;
+                let productsCount = 0;
 
-                // Mock update list data
-                list.likes = (list.likes || 0) + Math.floor(Math.random() * 10);
-                list.products = (list.products || 0) + Math.floor(Math.random() * 3);
-                list.lastScraped = new Date().toISOString();
-
-                // Mock description based on list name (in production, this would be scraped from the page)
-                if (!list.description) {
-                    const mockDescriptions = [
-                        `Hand-picked selection of ${list.name.toLowerCase()} items curated by a top creator.`,
-                        `My favorite ${list.name.toLowerCase()} finds - tested and loved!`,
-                        `The best ${list.name.toLowerCase()} products I've discovered this season.`,
-                        `Everything you need for ${list.name.toLowerCase()} - all in one place!`,
-                        `Curated ${list.name.toLowerCase()} essentials for every budget.`
-                    ];
-                    list.description = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
-                }
-
-                // Update products in this list
-                const listProducts = products.filter(p => p.listId === listId);
-                for (const product of listProducts) {
-                    // Mock update product data
-                    product.price = product.price ? product.price * (1 + (Math.random() - 0.5) * 0.1) : null;
-                }
-
-                // Update in Supabase
                 try {
-                    await supabaseClient
-                        .from('lists')
-                        .update({
-                            likes: list.likes,
-                            products: list.products,
-                            last_scraped: list.lastScraped,
-                            description: list.description
-                        })
-                        .eq('id', listId);
-                } catch (err) {
-                    console.error('Error updating list in Supabase:', err);
+                    const response = await fetch(`${SCRAPER_URL}/scrape-list`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ listId })
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        scraped = true;
+                        productsCount = result.productsScraped;
+
+                        // Reload products from database
+                        const { data: newProducts } = await supabaseClient
+                            .from('products')
+                            .select('*')
+                            .eq('list_id', listId);
+
+                        if (newProducts) {
+                            // Remove old products for this list
+                            products = products.filter(p => p.listId !== listId);
+                            // Add new products
+                            products.push(...newProducts.map(p => ({
+                                asin: p.asin,
+                                title: p.title,
+                                url: p.url,
+                                price: p.price,
+                                currency: p.currency,
+                                image: p.image,
+                                listId: p.list_id,
+                                storefront: p.storefront_id,
+                                position: p.position
+                            })));
+                        }
+
+                        // Update list data
+                        list.products = productsCount;
+                        list.lastScraped = new Date().toISOString();
+                    } else if (result.error) {
+                        throw new Error(result.error);
+                    }
+                } catch (fetchError) {
+                    console.log('Scraper server not available:', fetchError.message);
+                    alert('Scraper server not running. Start it with:\nnode scripts/scraper-server.js');
+                    return;
                 }
 
                 renderLists();
-                alert(`Updated "${list.name}" with ${listProducts.length} products\nDescription: ${list.description}`);
+                renderProducts();
+                alert(`Updated "${list.name}" - scraped ${productsCount} products`);
             } finally {
                 if (btn) {
                     btn.disabled = false;
